@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+    <title>英文朗读打卡器 | 长按录音·智能降级</title>
+    <!-- Tailwind CSS + html2canvas -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        @keyframes pulse-ring {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);}
+            70% { transform: scale(1); box-shadow: 0 0 0 12px rgba(239, 68, 68, 0);}
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);}
+        }
+        .recording-pulse { animation: pulse-ring 1.2s infinite; }
+        .card-hover { transition: all 0.2s ease; }
+        .card-hover:hover { transform: translateY(-3px); box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1); }
+        .wave-bar-item { width: 6px; background: #60a5fa; border-radius: 4px; transition: height 0.05s ease; }
+        .no-select { user-select: none; -webkit-tap-highlight-color: transparent; }
+        #waveformContainer { transition: opacity 0.2s; }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-sky-50 to-indigo-100 min-h-screen font-sans antialiased no-select">
+
+<div class="container mx-auto px-4 py-6 max-w-4xl">
+    <!-- 顶部栏 -->
+    <div class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg p-4 mb-6 sticky top-2 z-20">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+            <h1 class="text-2xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">🎙️ 英文朗读打卡器</h1>
+            <div class="flex gap-2">
+                <button id="modeReadingBtn" class="px-4 py-2 rounded-full font-semibold transition-all shadow-sm bg-indigo-600 text-white">📖 朗读模式</button>
+                <button id="modeReciteBtn" class="px-4 py-2 rounded-full font-semibold transition-all shadow-sm bg-gray-200 text-gray-700">🧠 背诵模式</button>
+            </div>
+            <div class="flex items-center gap-2">
+                <label class="text-sm font-medium">🗣️ 口音:</label>
+                <select id="accentSelect" class="border rounded-lg px-2 py-1 text-sm bg-white shadow-sm">
+                    <option value="en-US">🇺🇸 美式 (en-US)</option>
+                    <option value="en-GB">🇬🇧 英式 (en-GB)</option>
+                    <option value="en-AU">🇦🇺 澳式 (en-AU)</option>
+                    <option value="en-IN">🇮🇳 印度式 (en-IN)</option>
+                </select>
+            </div>
+        </div>
+        <div class="flex flex-wrap justify-between items-center mt-3 gap-2">
+            <div class="flex items-center gap-2">
+                <span class="text-sm font-medium">👩‍🎓 学生:</span>
+                <select id="studentSelect" class="border rounded-lg px-3 py-1.5 text-sm bg-white w-40 shadow-sm"></select>
+                <button id="teacherPanelBtn" class="text-xs bg-amber-100 hover:bg-amber-200 px-3 py-1.5 rounded-full transition">🔐 教师面板</button>
+            </div>
+            <button id="exportProgressBtn" class="text-xs bg-emerald-100 hover:bg-emerald-200 px-3 py-1.5 rounded-full">📎 导出进度CSV</button>
+        </div>
+    </div>
+
+    <!-- 班级看板 -->
+    <div class="bg-white rounded-xl shadow-md p-4 mb-6">
+        <h2 class="font-bold text-gray-700 flex items-center gap-2">📊 班级完成进度看板 <span class="text-xs bg-gray-100 px-2 rounded-full">教师视图</span></h2>
+        <div id="studentProgressGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 mt-3"></div>
+    </div>
+
+    <!-- 句子卡片列表 -->
+    <div id="sentencesContainer" class="space-y-4 mb-20"></div>
+</div>
+
+<!-- 录音波形浮动层 -->
+<div id="waveformContainer" class="fixed bottom-6 left-4 right-4 bg-black/70 backdrop-blur-md rounded-full p-3 z-50 hidden items-center justify-between shadow-2xl">
+    <div class="text-white text-sm font-medium px-2">🎤 录音中...</div>
+    <div id="waveBars" class="flex gap-1.5 items-center h-8 flex-1 justify-center"></div>
+    <div class="text-white text-xs px-2">松手即评分</div>
+</div>
+
+<!-- 评分模态框 -->
+<div id="scoreModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 hidden transition-all duration-300">
+    <div class="bg-white rounded-2xl max-w-md w-full mx-4 p-6 shadow-2xl">
+        <h3 class="text-xl font-bold text-center mb-2">🎤 录音评分</h3>
+        <div id="scoreStars" class="flex justify-center text-3xl gap-1 my-2"></div>
+        <p id="scoreComment" class="text-center text-gray-600 mb-3"></p>
+        <div id="reciteCompare" class="bg-gray-50 p-3 rounded-lg text-sm mb-4 hidden"></div>
+        <div class="flex gap-3">
+            <button id="closeScoreBtn" class="flex-1 bg-gray-200 py-2 rounded-xl">关闭</button>
+            <button id="confirmCompleteBtn" class="flex-1 bg-indigo-600 text-white py-2 rounded-xl">✅ 标记完成</button>
+        </div>
+    </div>
+</div>
+
+<!-- 教师面板 -->
+<div id="teacherModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 hidden">
+    <div class="bg-white rounded-2xl max-w-2xl w-full mx-4 p-6 max-h-[85vh] overflow-auto">
+        <h2 class="text-xl font-bold mb-3">👩‍🏫 教师管理中心</h2>
+        <input type="password" id="teacherPassword" placeholder="管理员密码 (teacher123)" class="border p-2 rounded w-full mb-3">
+        <div id="authPanel" class="hidden space-y-4">
+            <div>
+                <label class="font-semibold block mb-1">📋 学生名单 (JSON)</label>
+                <textarea id="studentJsonInput" rows="3" class="border p-2 w-full rounded font-mono text-sm"></textarea>
+                <div class="flex gap-2 mt-2">
+                    <button id="saveStudentListBtn" class="bg-indigo-600 text-white px-4 py-1.5 rounded text-sm">💾 保存并重置进度</button>
+                    <button id="importDefaultStudents" class="bg-gray-200 px-4 py-1.5 rounded text-sm">恢复默认</button>
+                </div>
+            </div>
+            <div class="border-t pt-3">
+                <label class="font-semibold block mb-1">📖 朗读文章 (JSON数组)</label>
+                <textarea id="articleJsonInput" rows="4" class="border p-2 w-full rounded font-mono text-sm"></textarea>
+                <button id="saveArticleBtn" class="bg-emerald-600 text-white px-4 py-1.5 rounded text-sm mt-1">✍️ 更新文章</button>
+            </div>
+            <div class="border-t pt-3">
+                <p class="text-sm font-semibold mb-2">📤 导出完整配置 (教师→家长)</p>
+                <button id="exportConfigBtn" class="bg-blue-500 text-white px-4 py-1.5 rounded text-sm w-full">⬇️ 导出配置文件</button>
+                <p class="text-sm font-semibold mt-3">📥 家长导入教师配置</p>
+                <input type="file" id="importConfigInput" accept=".json" class="text-sm border p-1 rounded w-full">
+                <button id="importConfigBtn" class="bg-purple-500 text-white px-4 py-1.5 rounded text-sm w-full mt-1">📂 导入并应用</button>
+            </div>
+        </div>
+        <div class="mt-4 text-right">
+            <button id="closeTeacherModal" class="bg-gray-300 px-4 py-2 rounded">关闭</button>
+        </div>
+    </div>
+</div>
+
+<!-- 证书模态框 -->
+<div id="certModal" class="fixed inset-0 bg-black/60 flex items-center justify-center z-50 hidden">
+    <div id="certificateCard" class="bg-white rounded-2xl p-6 max-w-md w-full text-center shadow-2xl">
+        <div class="border-2 border-dashed border-indigo-200 p-5 rounded-xl">
+            <h2 class="text-2xl font-bold text-indigo-700">🏆 荣誉证书</h2>
+            <p class="mt-2">兹证明</p>
+            <p class="text-xl font-bold my-1" id="certStudentName"></p>
+            <p class="text-sm">完成全部句子打卡任务</p>
+            <p class="text-sm mt-2">模式: <span id="certMode" class="font-semibold"></span></p>
+            <p class="text-xs text-gray-500 mt-2">完成日期: <span id="certDate"></span></p>
+            <p class="text-xs text-gray-500">证书编号: <span id="certId"></span></p>
+            <p class="text-sm mt-2 italic">🌟 坚持练习，口语飞跃！</p>
+        </div>
+        <div class="flex gap-3 mt-4">
+            <button id="downloadCertBtn" class="flex-1 bg-indigo-600 text-white py-2 rounded-xl">📸 下载PNG</button>
+            <button id="closeCertBtn" class="flex-1 bg-gray-200 py-2 rounded-xl">关闭</button>
+        </div>
+    </div>
+</div>
+
+<!-- 降级手动评分模态框 (麦克风不可用时) -->
+<div id="fallbackModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 hidden">
+    <div class="bg-white rounded-2xl max-w-sm w-full mx-4 p-6 text-center">
+        <div class="text-4xl mb-2">🎙️❌</div>
+        <h3 class="text-lg font-bold">无法获取麦克风权限</h3>
+        <p class="text-sm text-gray-600 mt-2">请检查浏览器地址栏是否允许麦克风，或使用Chrome/Edge并确保 HTTPS 环境。</p>
+        <p class="text-sm text-gray-600">您也可以手动标记此句子为“已完成”。</p>
+        <div class="flex gap-3 mt-4">
+            <button id="fallbackCancel" class="flex-1 bg-gray-200 py-2 rounded-xl">取消</button>
+            <button id="fallbackComplete" class="flex-1 bg-indigo-600 text-white py-2 rounded-xl">✅ 手动完成</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // ======================== 全局变量 ==========================
+    let sentences = [];
+    let currentMode = "reading";
+    let currentStudentId = null;
+    let studentsList = [];
+    let speechVoices = [];
+    let selectedVoice = null;
+
+    // 录音相关
+    let mediaRecorder = null;
+    let audioChunks = [];
+    let recordingStream = null;
+    let isRecording = false;
+    let recordStartTime = 0;
+    let maxVolume = 0;
+    let volumeAnalyser = null;
+    let volumeSource = null;
+    let volumeInterval = null;
+    let audioContext = null;
+    let pendingSentenceIdx = null;
+    let pendingMode = null;
+    let waveInterval = null;
+
+    // DOM 元素
+    const sentencesContainer = document.getElementById('sentencesContainer');
+    const modeReadingBtn = document.getElementById('modeReadingBtn');
+    const modeReciteBtn = document.getElementById('modeReciteBtn');
+    const studentSelect = document.getElementById('studentSelect');
+    const accentSelect = document.getElementById('accentSelect');
+    const progressGrid = document.getElementById('studentProgressGrid');
+    const teacherPanelBtn = document.getElementById('teacherPanelBtn');
+    const teacherModal = document.getElementById('teacherModal');
+    const closeTeacherModal = document.getElementById('closeTeacherModal');
+    const teacherPassword = document.getElementById('teacherPassword');
+    const authPanel = document.getElementById('authPanel');
+    const saveStudentListBtn = document.getElementById('saveStudentListBtn');
+    const studentJsonInput = document.getElementById('studentJsonInput');
+    const importDefaultStudents = document.getElementById('importDefaultStudents');
+    const exportProgressBtn = document.getElementById('exportProgressBtn');
+    const scoreModal = document.getElementById('scoreModal');
+    const closeScoreBtn = document.getElementById('closeScoreBtn');
+    const confirmCompleteBtn = document.getElementById('confirmCompleteBtn');
+    const certModal = document.getElementById('certModal');
+    const closeCertBtn = document.getElementById('closeCertBtn');
+    const downloadCertBtn = document.getElementById('downloadCertBtn');
+    const waveformContainer = document.getElementById('waveformContainer');
+    const waveBarsDiv = document.getElementById('waveBars');
+    const saveArticleBtn = document.getElementById('saveArticleBtn');
+    const articleJsonInput = document.getElementById('articleJsonInput');
+    const exportConfigBtn = document.getElementById('exportConfigBtn');
+    const importConfigInput = document.getElementById('importConfigInput');
+    const importConfigBtn = document.getElementById('importConfigBtn');
+    const fallbackModal = document.getElementById('fallbackModal');
+    const fallbackCancel = document.getElementById('fallbackCancel');
+    const fallbackComplete = document.getElementById('fallbackComplete');
+
+    // 默认数据
+    const defaultArticle = [
+        { english: "The sun rises in the east and brings us light every morning.", chinese: "太阳从东方升起，每天早晨给我们带来光明。" },
+        { english: "Reading books can open the door to a world of imagination.", chinese: "阅读书籍可以打开想象世界的大门。" },
+        { english: "Practice makes perfect, so keep working hard every day.", chinese: "熟能生巧，所以每天都要努力。" },
+        { english: "Technology has changed the way we communicate with each other.", chinese: "技术改变了我们彼此沟通的方式。" },
+        { english: "Believe in yourself and you will achieve great success.", chinese: "相信自己，你会取得巨大成功。" }
+    ];
+    const defaultStudents = [
+        { name: "李小乐", id: "S001" },
+        { name: "张子轩", id: "S002" },
+        { name: "陈雨桐", id: "S003" }
+    ];
+
+    // 初始化文章
+    function loadArticleFromLocal() {
+        const stored = localStorage.getItem("reading_app_article");
+        if(stored) sentences = JSON.parse(stored);
+        else sentences = [...defaultArticle];
+        if(!sentences.length) sentences = [...defaultArticle];
+        localStorage.setItem("reading_app_article", JSON.stringify(sentences));
+    }
+    function saveArticleToLocal() { localStorage.setItem("reading_app_article", JSON.stringify(sentences)); }
+
+    // 学生管理
+    function loadStudentsFromLocal() {
+        const stored = localStorage.getItem("reading_app_students");
+        if(stored) studentsList = JSON.parse(stored);
+        else studentsList = [...defaultStudents];
+        if(!studentsList.length) studentsList = [...defaultStudents];
+        localStorage.setItem("reading_app_students", JSON.stringify(studentsList));
+        renderStudentSelect();
+        renderProgressBoard();
+    }
+    function saveStudentsToLocal() { localStorage.setItem("reading_app_students", JSON.stringify(studentsList)); }
+
+    // 进度操作
+    function getCompletedSentences(studentId, mode) {
+        const key = `${mode}_progress_${studentId}`;
+        const stored = localStorage.getItem(key);
+        return stored ? JSON.parse(stored) : [];
+    }
+    function setCompletedSentence(studentId, mode, sentenceIdx, completed = true) {
+        let list = getCompletedSentences(studentId, mode);
+        if(completed && !list.includes(sentenceIdx)) list.push(sentenceIdx);
+        else if(!completed) list = list.filter(i => i !== sentenceIdx);
+        localStorage.setItem(`${mode}_progress_${studentId}`, JSON.stringify(list));
+        renderProgressBoard();
+        renderSentences();
+        checkAllSentencesCompleted(studentId, mode);
+    }
+    function checkAllSentencesCompleted(studentId, mode) {
+        if(!studentId || sentences.length===0) return;
+        const completed = getCompletedSentences(studentId, mode);
+        if(completed.length === sentences.length) showCertificate(studentId, mode);
+    }
+
+    function showCertificate(studentId, mode) {
+        const student = studentsList.find(s => s.id === studentId);
+        if(!student) return;
+        document.getElementById('certStudentName').innerText = student.name;
+        document.getElementById('certMode').innerText = mode === 'reading' ? '朗读模式' : '背诵模式';
+        document.getElementById('certDate').innerText = new Date().toLocaleDateString();
+        const certNum = 'CTF' + Date.now().toString(36) + Math.random().toString(36).substr(2,6).toUpperCase();
+        document.getElementById('certId').innerText = certNum;
+        certModal.classList.remove('hidden');
+    }
+
+    function exportCSV() {
+        let rows = [["学生姓名","学号","朗读完成数","背诵完成数"]];
+        studentsList.forEach(s => {
+            rows.push([s.name, s.id, `${getCompletedSentences(s.id,"reading").length}/${sentences.length}`, `${getCompletedSentences(s.id,"reciting").length}/${sentences.length}`]);
+        });
+        const csv = rows.map(r=>r.join(",")).join("\n");
+        const blob = new Blob(["\uFEFF"+csv], {type:"text/csv;charset=utf-8"});
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = "reading_progress.csv";
+        a.click();
+        URL.revokeObjectURL(a.href);
+    }
+
+    function renderStudentSelect() {
+        studentSelect.innerHTML = '<option value="">-- 选择学生 --</option>';
+        studentsList.forEach(s => {
+            const opt = document.createElement('option');
+            opt.value = s.id;
+            opt.innerText = `${s.name} (${s.id})`;
+            if(currentStudentId === s.id) opt.selected = true;
+            studentSelect.appendChild(opt);
+        });
+        if(studentsList.length && !currentStudentId) currentStudentId = studentsList[0].id;
+        renderSentences();
+        renderProgressBoard();
+    }
+
+    function renderProgressBoard() {
+        if(!studentsList.length) { progressGrid.innerHTML = '<div class="text-gray-400">暂无学生</div>'; return; }
+        progressGrid.innerHTML = studentsList.map(s => {
+            const readingDone = getCompletedSentences(s.id,"reading").length === sentences.length && sentences.length>0;
+            const recitingDone = getCompletedSentences(s.id,"reciting").length === sentences.length && sentences.length>0;
+            let color = "bg-gray-200 text-gray-600", text = "未完成";
+            if(readingDone && recitingDone) { color = "bg-green-500 text-white"; text = "🏆 全完成";}
+            else if(readingDone) { color = "bg-green-400 text-white"; text = "朗读✔️";}
+            else if(recitingDone) { color = "bg-blue-400 text-white"; text = "背诵✔️";}
+            return `<div class="p-2 rounded-xl text-center ${color} font-medium">${s.name}<div class="text-xs">${text}</div></div>`;
+        }).join('');
+    }
+
+    // 渲染卡片，绑定长按录音（增强降级处理）
+    function renderSentences() {
+        if(!sentences.length) return;
+        const completedReading = currentStudentId ? getCompletedSentences(currentStudentId,"reading") : [];
+        const completedReciting = currentStudentId ? getCompletedSentences(currentStudentId,"reciting") : [];
+        let html = '';
+        sentences.forEach((sent, idx) => {
+            const isCompleted = currentMode === 'reading' ? completedReading.includes(idx) : completedReciting.includes(idx);
+            const content = currentMode === 'reading' ? `<div class="font-bold text-gray-800 text-lg mb-1">${sent.english}</div><div class="text-gray-600 text-sm">${sent.chinese}</div>` : `<div class="text-gray-700 text-base">${sent.chinese}</div>`;
+            const completeIcon = isCompleted ? '<span class="ml-2 text-green-500 text-lg">✅</span>' : '';
+            html += `
+                <div class="card-hover bg-white rounded-xl shadow-md p-4 border-l-8 ${isCompleted ? 'border-green-400' : 'border-indigo-300'}" data-sentence-idx="${idx}">
+                    <div class="flex justify-between items-start">
+                        <div class="flex-1 cursor-pointer play-sentence" data-idx="${idx}">${content}</div>
+                        ${completeIcon}
+                    </div>
+                    <div class="flex gap-3 mt-3 justify-end">
+                        <button class="play-btn bg-indigo-100 hover:bg-indigo-200 px-3 py-1.5 rounded-full text-sm" data-idx="${idx}">🔊 播放原音</button>
+                        <button class="record-longpress-btn bg-red-100 hover:bg-red-200 px-4 py-1.5 rounded-full text-sm font-medium transition-all active:scale-95" data-idx="${idx}">🎙️ 按住录音</button>
+                    </div>
+                </div>
+            `;
+        });
+        sentencesContainer.innerHTML = html;
+
+        // 播放事件
+        document.querySelectorAll('.play-sentence, .play-btn').forEach(el => {
+            el.addEventListener('click', (e) => {
+                e.stopPropagation();
+                let idx = e.currentTarget.dataset.idx;
+                if(idx === undefined) idx = e.currentTarget.closest('[data-sentence-idx]')?.dataset.sentenceIdx;
+                if(idx !== undefined) playTTS(sentences[parseInt(idx)].english);
+            });
+        });
+
+        // 长按录音（带权限检测与降级）
+        document.querySelectorAll('.record-longpress-btn').forEach(btn => {
+            let pressTimer = null;
+            const idx = parseInt(btn.dataset.idx);
+            const startPress = async (e) => {
+                e.preventDefault();
+                if(pressTimer) return;
+                pressTimer = setTimeout(async () => {
+                    await startLongPressRecording(idx);
+                }, 150);
+            };
+            const cancelPress = () => {
+                if(pressTimer) { clearTimeout(pressTimer); pressTimer = null; }
+                if(isRecording) stopRecordingAndRate();
+            };
+            btn.addEventListener('mousedown', startPress);
+            btn.addEventListener('mouseup', cancelPress);
+            btn.addEventListener('mouseleave', cancelPress);
+            btn.addEventListener('touchstart', startPress, {passive: false});
+            btn.addEventListener('touchend', cancelPress);
+            btn.addEventListener('touchcancel', cancelPress);
+        });
+    }
+
+    // 核心录音逻辑（增强错误处理 + 降级弹窗）
+    async function startLongPressRecording(sentenceIdx) {
+        if(!currentStudentId) { alert("请先选择学生"); return; }
+        if(isRecording) return;
+        pendingSentenceIdx = sentenceIdx;
+        pendingMode = currentMode;
+
+        // 检测浏览器支持
+        if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+            showFallbackDialog("您的浏览器不支持麦克风API，请使用 Chrome/Edge 最新版。");
+            return;
+        }
+
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            recordingStream = stream;
+            // 初始化音频上下文与音量分析
+            audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            volumeSource = audioContext.createMediaStreamSource(stream);
+            const analyser = audioContext.createAnalyser();
+            analyser.fftSize = 256;
+            volumeSource.connect(analyser);
+            volumeAnalyser = analyser;
+            maxVolume = 0;
+            showWaveformUI();
+
+            audioChunks = [];
+            mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
+            mediaRecorder.ondataavailable = (e) => { if(e.data.size>0) audioChunks.push(e.data); };
+            mediaRecorder.start(100);
+            isRecording = true;
+            recordStartTime = Date.now();
+
+            volumeInterval = setInterval(() => {
+                if(!volumeAnalyser || !isRecording) return;
+                const dataArray = new Uint8Array(volumeAnalyser.frequencyBinCount);
+                volumeAnalyser.getByteFrequencyData(dataArray);
+                let sum = 0;
+                for(let i=0;i<dataArray.length;i++) sum+=dataArray[i];
+                let avgVol = sum/(dataArray.length||1);
+                if(avgVol > maxVolume) maxVolume = avgVol;
+                updateWaveformBars(avgVol);
+            }, 60);
+        } catch (err) {
+            console.error("麦克风授权失败:", err);
+            let errorMsg = "无法获取麦克风权限。";
+            if(err.name === 'NotAllowedError') errorMsg = "您拒绝了麦克风权限，请点击地址栏图标允许麦克风后重试。";
+            else if(err.name === 'NotFoundError') errorMsg = "未检测到麦克风设备，请插入麦克风。";
+            else if(err.name === 'NotReadableError') errorMsg = "麦克风被其他应用占用，请关闭其他录音软件。";
+            showFallbackDialog(errorMsg);
+        }
+    }
+
+    function showFallbackDialog(message) {
+        // 显示降级弹窗，让用户手动标记完成
+        const fallbackMsg = document.querySelector('#fallbackModal p:first-of-type');
+        if(fallbackMsg) fallbackMsg.innerText = message;
+        fallbackModal.classList.remove('hidden');
+        // 绑定手动完成事件
+        const onComplete = () => {
+            if(pendingSentenceIdx !== undefined && currentStudentId && pendingMode === currentMode) {
+                setCompletedSentence(currentStudentId, currentMode, pendingSentenceIdx, true);
+                alert("已手动标记完成！鼓励继续练习~");
+            }
+            fallbackModal.classList.add('hidden');
+            fallbackComplete.removeEventListener('click', onComplete);
+            fallbackCancel.removeEventListener('click', onCancel);
+        };
+        const onCancel = () => {
+            fallbackModal.classList.add('hidden');
+            fallbackComplete.removeEventListener('click', onComplete);
+            fallbackCancel.removeEventListener('click', onCancel);
+        };
+        fallbackComplete.onclick = onComplete;
+        fallbackCancel.onclick = onCancel;
+    }
+
+    function stopRecordingAndRate() {
+        if(!isRecording || !mediaRecorder) {
+            cleanupRecording();
+            return;
+        }
+        if(mediaRecorder.state === 'recording') {
+            mediaRecorder.onstop = async () => {
+                const duration = (Date.now() - recordStartTime) / 1000;
+                cleanupRecording();
+                evaluateRecording(duration, maxVolume, pendingSentenceIdx);
+            };
+            mediaRecorder.stop();
+        } else {
+            cleanupRecording();
+        }
+    }
+
+    function cleanupRecording() {
+        if(volumeInterval) clearInterval(volumeInterval);
+        if(audioContext) audioContext.close().catch(e=>console.log);
+        if(recordingStream) recordingStream.getTracks().forEach(t=>t.stop());
+        isRecording = false;
+        hideWaveformUI();
+    }
+
+    function evaluateRecording(duration, volume, sentenceIdx) {
+        let stars = 1;
+        if(duration >= 2 && volume > 25) stars = 3;
+        if(duration >= 3.5 && volume > 45) stars = 4;
+        if(duration >= 4 && volume > 65) stars = 5;
+        if(duration < 1.5 || volume < 15) stars = 2;
+        let comment = "";
+        if(stars === 5) comment = "Perfect! 🌟 发音流畅自信！";
+        else if(stars === 4) comment = "Great job! 再稍加练习会更棒~";
+        else if(stars === 3) comment = "Good! 多听原音模仿会更好";
+        else comment = "Keep practicing! 勇敢再试一次！";
+        const starsHtml = '★'.repeat(stars) + '☆'.repeat(5-stars);
+        document.getElementById('scoreStars').innerHTML = starsHtml;
+        document.getElementById('scoreComment').innerText = comment;
+        const compareDiv = document.getElementById('reciteCompare');
+        if(pendingMode === 'reciting' && sentences[sentenceIdx]) {
+            compareDiv.innerHTML = `<div class="mt-2 p-2 bg-indigo-50 rounded">📖 原文参考: <span class="font-mono">${sentences[sentenceIdx].english}</span><br>⭐ 根据原文对照提升！</div>`;
+            compareDiv.classList.remove('hidden');
+        } else compareDiv.classList.add('hidden');
+        scoreModal.classList.remove('hidden');
+        window._pendingCompleteIdx = sentenceIdx;
+    }
+
+    confirmCompleteBtn.onclick = () => {
+        if(window._pendingCompleteIdx !== undefined && currentStudentId && pendingMode === currentMode) {
+            setCompletedSentence(currentStudentId, currentMode, window._pendingCompleteIdx, true);
+        }
+        scoreModal.classList.add('hidden');
+        window._pendingCompleteIdx = undefined;
+    };
+    closeScoreBtn.onclick = () => scoreModal.classList.add('hidden');
+
+    // 波形UI
+    function showWaveformUI() {
+        waveformContainer.classList.remove('hidden');
+        waveformContainer.classList.add('flex');
+        waveBarsDiv.innerHTML = '';
+        for(let i=0;i<24;i++) {
+            const bar = document.createElement('div');
+            bar.className = 'wave-bar-item bg-gradient-to-t from-blue-400 to-indigo-400';
+            bar.style.height = '4px';
+            waveBarsDiv.appendChild(bar);
+        }
+    }
+    function updateWaveformBars(volume) {
+        const bars = document.querySelectorAll('#waveBars .wave-bar-item');
+        const intensity = Math.min(1, volume / 100);
+        const maxH = 32;
+        bars.forEach((bar, idx) => {
+            let h = 4 + intensity * maxH * (0.5 + Math.sin(Date.now()/100 + idx)*0.5);
+            h = Math.min(maxH, Math.max(4, h));
+            bar.style.height = `${h}px`;
+        });
+    }
+    function hideWaveformUI() { waveformContainer.classList.add('hidden'); waveformContainer.classList.remove('flex'); }
+
+    // TTS
+    function loadVoicesAndCache() {
+        if(typeof speechSynthesis === 'undefined') return;
+        const update = () => {
+            speechVoices = speechSynthesis.getVoices();
+            const lang = accentSelect.value;
+            selectedVoice = speechVoices.find(v=>v.lang===lang && v.localService) || speechVoices.find(v=>v.lang.startsWith(lang));
+            if(!selectedVoice && speechVoices.length) selectedVoice = speechVoices[0];
+        };
+        update();
+        speechSynthesis.onvoiceschanged = update;
+    }
+    function playTTS(text) {
+        if(!text) return;
+        speechSynthesis.cancel();
+        const utter = new SpeechSynthesisUtterance(text);
+        if(selectedVoice) utter.voice = selectedVoice;
+        utter.lang = accentSelect.value;
+        utter.rate = 0.9;
+        speechSynthesis.speak(utter);
+    }
+
+    // 教师配置
+    function updateArticleFromJSON(jsonStr) {
+        try {
+            const newArt = JSON.parse(jsonStr);
+            if(Array.isArray(newArt) && newArt.every(s=>s.english && s.chinese)) {
+                sentences = newArt;
+                saveArticleToLocal();
+                studentsList.forEach(s => {
+                    localStorage.removeItem(`reading_progress_${s.id}`);
+                    localStorage.removeItem(`reciting_progress_${s.id}`);
+                });
+                renderSentences();
+                renderProgressBoard();
+                alert("文章已更新，所有学生进度已重置。");
+            } else throw new Error();
+        } catch(e) { alert("JSON格式错误，需要包含english和chinese字段的数组。"); }
+    }
+
+    function exportFullConfig() {
+        const config = { article: sentences, students: studentsList, version: "1.0" };
+        const blob = new Blob([JSON.stringify(config, null, 2)], {type:"application/json"});
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = "teacher_config.json";
+        a.click();
+        URL.revokeObjectURL(a.href);
+    }
+    function importFullConfig(file) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            try {
+                const cfg = JSON.parse(e.target.result);
+                if(cfg.article && cfg.students) {
+                    sentences = cfg.article;
+                    studentsList = cfg.students;
+                    saveArticleToLocal();
+                    saveStudentsToLocal();
+                    studentsList.forEach(s => {
+                        localStorage.removeItem(`reading_progress_${s.id}`);
+                        localStorage.removeItem(`reciting_progress_${s.id}`);
+                    });
+                    renderStudentSelect();
+                    renderSentences();
+                    renderProgressBoard();
+                    alert("配置导入成功！文章和班级已更新，进度已重置。");
+                } else throw new Error();
+            } catch(e) { alert("配置文件解析失败"); }
+        };
+        reader.readAsText(file);
+    }
+
+    function setMode(mode) {
+        currentMode = mode;
+        if(mode === 'reading') {
+            modeReadingBtn.className = "px-4 py-2 rounded-full font-semibold bg-indigo-600 text-white";
+            modeReciteBtn.className = "px-4 py-2 rounded-full font-semibold bg-gray-200 text-gray-700";
+        } else {
+            modeReadingBtn.className = "px-4 py-2 rounded-full font-semibold bg-gray-200 text-gray-700";
+            modeReciteBtn.className = "px-4 py-2 rounded-full font-semibold bg-indigo-600 text-white";
+        }
+        renderSentences();
+    }
+
+    // 事件绑定
+    modeReadingBtn.onclick = () => setMode('reading');
+    modeReciteBtn.onclick = () => setMode('reciting');
+    studentSelect.onchange = (e) => { currentStudentId = e.target.value; renderSentences(); renderProgressBoard(); };
+    accentSelect.onchange = () => loadVoicesAndCache();
+    exportProgressBtn.onclick = () => exportCSV();
+    teacherPanelBtn.onclick = () => { teacherModal.classList.remove('hidden'); teacherPassword.value = ""; authPanel.classList.add('hidden'); };
+    teacherPassword.oninput = function() { if(this.value === "teacher123") { authPanel.classList.remove('hidden'); studentJsonInput.value = JSON.stringify(studentsList, null, 2); articleJsonInput.value = JSON.stringify(sentences, null, 2); } else authPanel.classList.add('hidden'); };
+    saveStudentListBtn.onclick = () => { try { const newList = JSON.parse(studentJsonInput.value); if(Array.isArray(newList)) { studentsList = newList; saveStudentsToLocal(); studentsList.forEach(s=>{localStorage.removeItem(`reading_progress_${s.id}`);localStorage.removeItem(`reciting_progress_${s.id}`);}); if(!studentsList.find(s=>s.id===currentStudentId)) currentStudentId=studentsList[0]?.id; renderStudentSelect(); alert("学生名单已更新"); teacherModal.classList.add('hidden');} } catch(e){ alert("格式错误"); } };
+    importDefaultStudents.onclick = () => { studentJsonInput.value = JSON.stringify(defaultStudents, null, 2); };
+    saveArticleBtn.onclick = () => updateArticleFromJSON(articleJsonInput.value);
+    exportConfigBtn.onclick = () => exportFullConfig();
+    importConfigBtn.onclick = () => { if(importConfigInput.files.length) importFullConfig(importConfigInput.files[0]); else alert("请选择JSON文件"); };
+    closeTeacherModal.onclick = () => teacherModal.classList.add('hidden');
+    downloadCertBtn.onclick = () => { html2canvas(document.getElementById('certificateCard'), {scale:2}).then(canvas=>{const a=document.createElement('a');a.download='cert.png';a.href=canvas.toDataURL();a.click();}); };
+    closeCertBtn.onclick = () => certModal.classList.add('hidden');
+
+    // 启动应用
+    loadArticleFromLocal();
+    loadStudentsFromLocal();
+    loadVoicesAndCache();
+    setMode('reading');
+    if(location.protocol !== 'https:' && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
+        console.warn("非安全上下文，麦克风可能不可用，建议使用 HTTPS 或 localhost");
+    }
+</script>
+</body>
+</html>
