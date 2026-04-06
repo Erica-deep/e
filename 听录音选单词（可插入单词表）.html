@@ -1,0 +1,776 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>听力小达人 - 听音选词游戏</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .container {
+            width: 100%;
+            max-width: 800px;
+            background-color: white;
+            border-radius: 20px;
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+        }
+        
+        header {
+            background: linear-gradient(90deg, #4b6cb7, #182848);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            position: relative;
+        }
+        
+        h1 {
+            font-size: 2.2rem;
+            margin-bottom: 10px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .subtitle {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+        
+        .word-input-section {
+            padding: 20px;
+            background-color: #f5f9ff;
+            border-bottom: 1px solid #e0e7ff;
+        }
+        
+        .input-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        
+        .btn {
+            background: linear-gradient(90deg, #4b6cb7, #182848);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            flex: 1;
+            min-width: 200px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        .btn:active {
+            transform: translateY(0);
+        }
+        
+        #wordList {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #4b6cb7;
+            border-radius: 10px;
+            font-size: 16px;
+            resize: vertical;
+            min-height: 120px;
+            margin-bottom: 15px;
+        }
+        
+        .game-section {
+            padding: 25px;
+            display: none;
+        }
+        
+        .progress-container {
+            margin-bottom: 25px;
+        }
+        
+        .progress-info {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-size: 18px;
+            color: #4b6cb7;
+            font-weight: 500;
+        }
+        
+        .progress-bar {
+            height: 15px;
+            background-color: #e0e7ff;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
+        }
+        
+        .progress {
+            height: 100%;
+            background: linear-gradient(90deg, #4b6cb7, #182848);
+            width: 0%;
+            transition: width 0.5s ease;
+            border-radius: 8px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .progress::after {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(90deg, 
+                transparent 0%, 
+                rgba(255,255,255,0.3) 50%, 
+                transparent 100%);
+            animation: shimmer 2s infinite;
+        }
+        
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+        
+        .question-container {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .question-text {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: #182848;
+        }
+        
+        .play-btn {
+            background: linear-gradient(90deg, #4b6cb7, #182848);
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 0 auto 25px;
+            cursor: pointer;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+            transition: all 0.3s ease;
+        }
+        
+        .play-btn:hover {
+            transform: scale(1.05);
+        }
+        
+        .play-btn i {
+            font-size: 36px;
+            color: white;
+        }
+        
+        .options-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .option {
+            padding: 20px;
+            background-color: #e0e7ff;
+            border-radius: 15px;
+            font-size: 20px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            border: 3px solid transparent;
+        }
+        
+        .option:hover {
+            background-color: #c5d3ff;
+            transform: translateY(-3px);
+        }
+        
+        .option.correct {
+            background-color: #4ade80;
+            color: white;
+            border-color: #22c55e;
+        }
+        
+        .option.wrong {
+            background-color: #f87171;
+            color: white;
+            border-color: #ef4444;
+        }
+        
+        .feedback {
+            height: 40px;
+            font-size: 20px;
+            font-weight: bold;
+            text-align: center;
+            margin-top: 10px;
+            transition: all 0.3s ease;
+        }
+        
+        .feedback.correct {
+            color: #22c55e;
+            animation: pulse 0.5s;
+        }
+        
+        .feedback.wrong {
+            color: #ef4444;
+            animation: shake 0.5s;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+        
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+        
+        .result-section {
+            padding: 40px;
+            text-align: center;
+            display: none;
+        }
+        
+        .certificate {
+            background: linear-gradient(135deg, #fff9c4, #fff176);
+            border: 15px solid #4b6cb7;
+            border-radius: 20px;
+            padding: 40px;
+            margin: 20px 0;
+            position: relative;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+        }
+        
+        .certificate h2 {
+            font-size: 36px;
+            color: #182848;
+            margin-bottom: 30px;
+        }
+        
+        .certificate h3 {
+            font-size: 48px;
+            color: #4b6cb7;
+            margin-bottom: 40px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .certificate p {
+            font-size: 24px;
+            color: #4b6cb7;
+            margin: 15px 0;
+        }
+        
+        .stars {
+            margin: 30px 0;
+            font-size: 40px;
+            color: #FFD700;
+        }
+        
+        .result-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 30px;
+        }
+        
+        .btn-save {
+            background: linear-gradient(90deg, #4b6cb7, #182848);
+        }
+        
+        .btn-again {
+            background: linear-gradient(90deg, #22c55e, #16a34a);
+        }
+        
+        .instructions {
+            background-color: #f0f7ff;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+            font-size: 14px;
+            color: #4b6cb7;
+            border-left: 4px solid #4b6cb7;
+        }
+        
+        .file-input-wrapper {
+            position: relative;
+            width: 100%;
+            margin-bottom: 15px;
+        }
+        
+        #fileInput {
+            position: absolute;
+            left: 0;
+            top: 0;
+            opacity: 0;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+        }
+        
+        .default-words {
+            background-color: #e0e7ff;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 15px;
+            font-size: 14px;
+            color: #4b6cb7;
+        }
+        
+        @media (max-width: 600px) {
+            .options-container {
+                grid-template-columns: 1fr;
+            }
+            
+            .certificate h2 {
+                font-size: 28px;
+            }
+            
+            .certificate h3 {
+                font-size: 36px;
+            }
+            
+            .certificate p {
+                font-size: 18px;
+            }
+            
+            h1 {
+                font-size: 1.8rem;
+            }
+            
+            .input-group {
+                flex-direction: column;
+            }
+            
+            .btn {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>听力小达人</h1>
+            <div class="subtitle">听音选词挑战赛</div>
+        </header>
+        
+        <div class="word-input-section">
+            <h2>单词表设置</h2>
+            <p>请输入单词对（每行一对单词，用逗号分隔）：</p>
+            <textarea id="wordList" placeholder="例如：
+blocks, blouse
+plane, plant
+fruit, food
+globe, glow
+prince, prize">blocks, blouse
+plane, plant
+fruit, food
+globe, glow
+prince, prize</textarea>
+            
+            <div class="file-input-wrapper">
+                <button class="btn" id="excelBtn">
+                    <i class="fas fa-file-excel"></i> 插入Excel单词表
+                </button>
+                <input type="file" id="fileInput" accept=".xlsx, .xls">
+            </div>
+            
+            <div class="input-group">
+                <button id="startBtn" class="btn">
+                    <i class="fas fa-play"></i> 开始游戏
+                </button>
+            </div>
+            
+            <div class="default-words">
+                <p><i class="fas fa-info-circle"></i> 提示：如果未插入单词表，将使用默认的5组单词进行练习</p>
+            </div>
+        </div>
+        
+        <div class="game-section">
+            <div class="progress-container">
+                <div class="progress-info">
+                    <div>第 <span id="currentQuestion">1</span> 题 / 共 <span id="totalQuestions">5</span> 题</div>
+                    <div>得分: <span id="score">0</span></div>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress" id="progress"></div>
+                </div>
+            </div>
+            
+            <div class="question-container">
+                <div class="question-text">请听下面的单词发音：</div>
+                <div class="play-btn" id="playBtn">
+                    <i class="fas fa-volume-up"></i>
+                </div>
+                <audio id="audioPlayer"></audio>
+            </div>
+            
+            <div class="options-container" id="optionsContainer">
+                <!-- 选项将由JS动态生成 -->
+            </div>
+            
+            <div class="feedback" id="feedback"></div>
+        </div>
+        
+        <div class="result-section">
+            <div class="certificate" id="certificate">
+                <h2>听力挑战通关证书</h2>
+                <h3>听力小达人</h3>
+                <div class="stars">
+                    <i class="fas fa-star"></i>
+                    <i class="fas fa-star"></i>
+                    <i class="fas fa-star"></i>
+                    <i class="fas fa-star"></i>
+                    <i class="fas fa-star"></i>
+                </div>
+                <p>恭喜你成功完成所有挑战！</p>
+                <p>答对题数: <span id="correctCount">0</span> 题</p>
+                <p>答错题数: <span id="wrongCount">0</span> 题</p>
+                <p>最终得分: <span id="finalScore">0</span> 分</p>
+            </div>
+            
+            <div class="result-buttons">
+                <button class="btn btn-save" id="saveBtn">
+                    <i class="fas fa-download"></i> 保存证书
+                </button>
+                <button class="btn btn-again" id="againBtn">
+                    <i class="fas fa-redo"></i> 再玩一次
+                </button>
+            </div>
+            
+            <div class="instructions">
+                提示：保存证书功能在移动设备上可能需要授权保存图片权限
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 默认单词表
+        const DEFAULT_WORDS = [
+            ["blocks", "blouse"],
+            ["plane", "plant"],
+            ["fruit", "food"],
+            ["globe", "glow"],
+            ["prince", "prize"]
+        ];
+        
+        // 游戏数据
+        const gameData = {
+            wordPairs: [],
+            currentQuestion: 0,
+            score: 0,
+            correctCount: 0,
+            wrongCount: 0,
+            totalQuestions: 0,
+            currentCorrectAnswer: ""
+        };
+        
+        // DOM元素
+        const wordListInput = document.getElementById('wordList');
+        const startBtn = document.getElementById('startBtn');
+        const excelBtn = document.getElementById('excelBtn');
+        const fileInput = document.getElementById('fileInput');
+        const gameSection = document.querySelector('.game-section');
+        const wordInputSection = document.querySelector('.word-input-section');
+        const resultSection = document.querySelector('.result-section');
+        const progressBar = document.getElementById('progress');
+        const currentQuestionEl = document.getElementById('currentQuestion');
+        const totalQuestionsEl = document.getElementById('totalQuestions');
+        const scoreEl = document.getElementById('score');
+        const optionsContainer = document.getElementById('optionsContainer');
+        const feedbackEl = document.getElementById('feedback');
+        const playBtn = document.getElementById('playBtn');
+        const audioPlayer = document.getElementById('audioPlayer');
+        const correctCountEl = document.getElementById('correctCount');
+        const wrongCountEl = document.getElementById('wrongCount');
+        const finalScoreEl = document.getElementById('finalScore');
+        const saveBtn = document.getElementById('saveBtn');
+        const againBtn = document.getElementById('againBtn');
+        const certificate = document.getElementById('certificate');
+        
+        // 初始化游戏
+        function initGame() {
+            // 解析单词表
+            const wordList = wordListInput.value.trim();
+            
+            if (wordList) {
+                // 解析用户输入的单词
+                gameData.wordPairs = [];
+                const lines = wordList.split('\n');
+                for (const line of lines) {
+                    const pair = line.split(',').map(word => word.trim()).filter(word => word);
+                    if (pair.length === 2) {
+                        gameData.wordPairs.push(pair);
+                    }
+                }
+            }
+            
+            // 如果用户没有输入单词或输入无效，使用默认单词
+            if (gameData.wordPairs.length === 0) {
+                gameData.wordPairs = DEFAULT_WORDS;
+                wordListInput.value = DEFAULT_WORDS.map(pair => pair.join(', ')).join('\n');
+            }
+            
+            // 重置游戏数据
+            gameData.currentQuestion = 0;
+            gameData.score = 0;
+            gameData.correctCount = 0;
+            gameData.wrongCount = 0;
+            gameData.totalQuestions = gameData.wordPairs.length;
+            
+            // 更新UI
+            wordInputSection.style.display = 'none';
+            gameSection.style.display = 'block';
+            resultSection.style.display = 'none';
+            
+            totalQuestionsEl.textContent = gameData.totalQuestions;
+            scoreEl.textContent = gameData.score;
+            
+            // 开始第一题
+            showQuestion();
+        }
+        
+        // 处理Excel上传
+        function handleExcelUpload(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, {type: 'array'});
+                    
+                    // 获取第一个工作表
+                    const firstSheetName = workbook.SheetNames[0];
+                    const worksheet = workbook.Sheets[firstSheetName];
+                    
+                    // 将工作表转换为JSON
+                    const jsonData = XLSX.utils.sheet_to_json(worksheet, {header: 1});
+                    
+                    // 过滤有效行（每行至少有两个非空单元格）
+                    const validRows = jsonData.filter(row => 
+                        row.length >= 2 && 
+                        row[0] && typeof row[0] === 'string' && 
+                        row[1] && typeof row[1] === 'string'
+                    );
+                    
+                    if (validRows.length > 0) {
+                        // 更新文本区域
+                        const wordText = validRows.map(row => 
+                            `${row[0].trim()}, ${row[1].trim()}`
+                        ).join('\n');
+                        
+                        wordListInput.value = wordText;
+                        alert(`成功导入 ${validRows.length} 组单词！`);
+                    } else {
+                        alert('Excel文件中未找到有效的单词对！请确保每行有两个单词。');
+                    }
+                } catch (error) {
+                    console.error('Excel解析错误:', error);
+                    alert('处理Excel文件时出错，请检查文件格式！');
+                }
+            };
+            
+            reader.readAsArrayBuffer(file);
+        }
+        
+        // 显示题目
+        function showQuestion() {
+            currentQuestionEl.textContent = gameData.currentQuestion + 1;
+            
+            // 更新进度条 - 均匀显示进度
+            const progressPercent = (gameData.currentQuestion / gameData.totalQuestions) * 100;
+            progressBar.style.width = `${progressPercent}%`;
+            
+            const pair = gameData.wordPairs[gameData.currentQuestion];
+            
+            // 修复：正确答案随机选择
+            const correctIndex = Math.floor(Math.random() * 2);
+            gameData.currentCorrectAnswer = pair[correctIndex];
+            
+            // 打乱选项顺序
+            const options = [...pair];
+            shuffleArray(options);
+            
+            // 创建选项
+            optionsContainer.innerHTML = '';
+            options.forEach((word) => {
+                const option = document.createElement('div');
+                option.className = 'option';
+                option.textContent = word;
+                option.dataset.word = word;
+                
+                option.addEventListener('click', () => checkAnswer(word));
+                optionsContainer.appendChild(option);
+            });
+            
+            // 播放音频
+            playAudio();
+            
+            // 重置反馈
+            feedbackEl.textContent = '';
+            feedbackEl.className = 'feedback';
+        }
+        
+        // 打乱数组顺序
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+        
+        // 播放音频
+        function playAudio() {
+            // 使用有道词典的英式发音API
+            const audioUrl = `https://dict.youdao.com/dictvoice?audio=${encodeURIComponent(gameData.currentCorrectAnswer)}&type=1`;
+            audioPlayer.src = audioUrl;
+            audioPlayer.play().catch(e => console.log('自动播放失败:', e));
+        }
+        
+        // 检查答案
+        function checkAnswer(selectedWord) {
+            const options = document.querySelectorAll('.option');
+            let isCorrect = false;
+            
+            options.forEach(option => {
+                if (option.dataset.word === selectedWord) {
+                    if (selectedWord === gameData.currentCorrectAnswer) {
+                        option.classList.add('correct');
+                        isCorrect = true;
+                    } else {
+                        option.classList.add('wrong');
+                    }
+                }
+                
+                // 禁用所有选项
+                option.style.pointerEvents = 'none';
+            });
+            
+            if (isCorrect) {
+                feedbackEl.textContent = 'Good job!';
+                feedbackEl.classList.add('correct');
+                gameData.score += 10;
+                gameData.correctCount++;
+                scoreEl.textContent = gameData.score;
+                
+                setTimeout(() => {
+                    nextQuestion();
+                }, 2000);
+            } else {
+                feedbackEl.textContent = 'Try again!';
+                feedbackEl.classList.add('wrong');
+                gameData.wrongCount++;
+                
+                setTimeout(() => {
+                    // 重新启用选项
+                    options.forEach(option => {
+                        option.style.pointerEvents = 'auto';
+                        // 移除错误样式（除了用户选择的错误选项）
+                        if (!option.classList.contains('wrong')) {
+                            option.classList.remove('wrong');
+                        }
+                    });
+                    feedbackEl.textContent = '';
+                    feedbackEl.className = 'feedback';
+                }, 1000);
+            }
+        }
+        
+        // 下一题
+        function nextQuestion() {
+            gameData.currentQuestion++;
+            
+            if (gameData.currentQuestion < gameData.totalQuestions) {
+                showQuestion();
+            } else {
+                showResults();
+            }
+        }
+        
+        // 显示结果
+        function showResults() {
+            gameSection.style.display = 'none';
+            resultSection.style.display = 'block';
+            
+            correctCountEl.textContent = gameData.correctCount;
+            wrongCountEl.textContent = gameData.wrongCount;
+            finalScoreEl.textContent = gameData.score;
+            
+            // 更新进度条到100%
+            progressBar.style.width = '100%';
+        }
+        
+        // 保存证书
+        function saveCertificate() {
+            html2canvas(certificate).then(canvas => {
+                const link = document.createElement('a');
+                link.download = '听力小达人证书.png';
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+            });
+        }
+        
+        // 重新开始
+        function restartGame() {
+            wordInputSection.style.display = 'block';
+            gameSection.style.display = 'none';
+            resultSection.style.display = 'none';
+        }
+        
+        // 事件监听器
+        startBtn.addEventListener('click', initGame);
+        excelBtn.addEventListener('click', () => fileInput.click());
+        fileInput.addEventListener('change', handleExcelUpload);
+        playBtn.addEventListener('click', playAudio);
+        saveBtn.addEventListener('click', saveCertificate);
+        againBtn.addEventListener('click', restartGame);
+        
+        // 初始设置
+        window.onload = function() {
+            // 确保在移动设备上音频可以播放
+            document.body.addEventListener('touchstart', function() {
+                // 空函数，用于激活音频上下文
+            }, { once: true });
+        };
+    </script>
+</body>
+</html>
