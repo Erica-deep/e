@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
+    <title>纯听力挑战 - 听问句选答句</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background: linear-gradient(145deg, #1e2b3c 0%, #0f1a24 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Segoe UI', 'Poppins', system-ui, -apple-system, 'Helvetica Neue', sans-serif;
+            margin: 0;
+            padding: 16px;
+        }
+
+        .game-container {
+            max-width: 700px;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.96);
+            border-radius: 56px 40px 56px 40px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        .game-header {
+            background: linear-gradient(135deg, #ff9a3c, #ff6f3c);
+            padding: 18px 20px;
+            color: white;
+            text-shadow: 2px 2px 0 rgba(0,0,0,0.15);
+            border-bottom: 4px solid #ffd966;
+        }
+
+        .game-header h1 {
+            margin: 0;
+            font-size: 1.7rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .badge {
+            background: #2b5e3b;
+            padding: 5px 14px;
+            border-radius: 60px;
+            font-size: 0.85rem;
+            font-weight: bold;
+        }
+
+        .progress-area {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            margin-top: 12px;
+            font-weight: 600;
+            background: rgba(0,0,0,0.2);
+            padding: 6px 16px;
+            border-radius: 50px;
+            font-size: 0.85rem;
+        }
+
+        .game-body {
+            padding: 24px 20px 32px;
+        }
+
+        .audio-card {
+            background: #fef7e0;
+            border-radius: 48px;
+            padding: 28px 20px;
+            margin-bottom: 32px;
+            text-align: center;
+            box-shadow: 0 8px 18px rgba(0, 0, 0, 0.08);
+            border: 1px solid #fff3cf;
+        }
+
+        .audio-btn {
+            background: #2c5f8a;
+            border: none;
+            color: white;
+            font-size: 2.2rem;
+            cursor: pointer;
+            padding: 16px 32px;
+            border-radius: 80px;
+            display: inline-flex;
+            align-items: center;
+            gap: 16px;
+            font-weight: bold;
+            transition: 0.1s linear;
+            box-shadow: 0 6px 0 #1a3f5c;
+            touch-action: manipulation;
+        }
+
+        .audio-btn:active {
+            transform: translateY(3px);
+            box-shadow: 0 2px 0 #1a3f5c;
+        }
+
+        .options-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 14px;
+            margin: 20px 0 18px;
+        }
+
+        @media (min-width: 500px) {
+            .options-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        .option-btn {
+            background: white;
+            border: 2px solid #e2e8f0;
+            border-radius: 60px;
+            padding: 14px 12px;
+            font-size: 1rem;
+            font-weight: 500;
+            text-align: center;
+            cursor: pointer;
+            transition: 0.1s;
+            color: #1e293b;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+            font-family: inherit;
+            touch-action: manipulation;
+            word-break: break-word;
+            line-height: 1.3;
+        }
+
+        .option-btn:active {
+            background: #f1f5f9;
+            transform: scale(0.97);
+            border-color: #ffb347;
+        }
+
+        .message-area {
+            text-align: center;
+            font-size: 0.95rem;
+            min-height: 58px;
+            padding: 8px;
+            font-weight: 500;
+        }
+
+        .error-msg {
+            color: #c7254e;
+            background: #ffe6ea;
+            border-radius: 40px;
+            display: inline-block;
+            padding: 8px 18px;
+        }
+
+        .success-msg {
+            color: #2b6e3c;
+            background: #e0f2e2;
+            border-radius: 40px;
+            display: inline-block;
+            padding: 8px 18px;
+        }
+
+        .control-buttons {
+            display: flex;
+            justify-content: center;
+            margin-top: 12px;
+        }
+
+        .reset-btn {
+            background: #475569;
+            border: none;
+            color: white;
+            padding: 10px 28px;
+            border-radius: 40px;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 0.9rem;
+            touch-action: manipulation;
+        }
+
+        .reset-btn:active {
+            background: #334155;
+            transform: scale(0.96);
+        }
+
+        .poster-area {
+            text-align: center;
+            background: linear-gradient(145deg, #ffecd2 0%, #fcb69f 100%);
+            border-radius: 56px;
+            padding: 24px 16px;
+            margin-top: 6px;
+            box-shadow: 0 20px 30px rgba(0,0,0,0.2);
+            animation: fadeInUp 0.5s ease;
+        }
+
+        .poster-canvas {
+            max-width: 100%;
+            border-radius: 32px;
+            box-shadow: 0 12px 20px rgba(0,0,0,0.2);
+            margin: 12px 0;
+            width: 100%;
+            height: auto;
+            background: white;
+        }
+
+        .poster-actions {
+            display: flex;
+            justify-content: center;
+            gap: 18px;
+            margin-top: 18px;
+            flex-wrap: wrap;
+        }
+
+        .play-again-btn {
+            background: #2c5f2d;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 40px;
+            font-weight: bold;
+            font-size: 0.95rem;
+            cursor: pointer;
+            touch-action: manipulation;
+        }
+
+        .play-again-btn:active {
+            transform: scale(0.96);
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        footer {
+            font-size: 0.7rem;
+            text-align: center;
+            padding: 14px;
+            background: #eef2f5;
+            color: #5f6c7a;
+            border-top: 1px solid #ddd;
+        }
+
+        button {
+            background: none;
+            border: none;
+        }
+    </style>
+</head>
+<body>
+
+<div class="game-container" id="gameApp">
+    <div class="game-header">
+        <h1>
+            🎧 听力挑战
+            <span class="badge">只听不读 · 选答句</span>
+        </h1>
+        <div class="progress-area">
+            <span>🎯 进度</span>
+            <span id="progressText">第1 / 5题</span>
+        </div>
+    </div>
+    <div class="game-body" id="gameBody">
+        <!-- 动态渲染 -->
+    </div>
+    <footer>🔊 点击喇叭听问句 · 从下方选择正确答句 (答案均来自题库)</footer>
+</div>
+
+<script>
+    // ---------- 题库 (问句 + 正确答句) 完全按照给定内容 ----------
+    const QUESTIONS_DATA = [
+        { question: "It's cold.", correct: "Put on your coat." },
+        { question: "Don't push.", correct: "Sorry." },
+        { question: "Can you do sit-ups?", correct: "No. But I can try." },
+        { question: "How many?", correct: "Ten. Try again." },
+        { question: "What's this?", correct: "It's a lake." }
+    ];
+
+    // 从题库中提取所有唯一的答句 (作为全局选项池)
+    const allPossibleAnswers = QUESTIONS_DATA.map(item => item.correct);
+    // 结果: ["Put on your coat.", "Sorry.", "No. But I can try.", "Ten. Try again.", "It's a lake."]
+
+    // ---------- 生成当前题目的选项: 正确答句 + 从全局池中随机抽取3个不同的错误答句 ----------
+    function generateOptionsForQuestion(currentIndex) {
+        const correctAnswer = QUESTIONS_DATA[currentIndex].correct;
+        // 错误选项池 = 所有答句中排除当前正确答句
+        const otherAnswers = allPossibleAnswers.filter(ans => ans !== correctAnswer);
+        // 随机取3个不同的错误选项 (题库共5个，排除正确后剩4个，足够抽取3个)
+        // 使用洗牌取前3保证随机性
+        const shuffledOthers = shuffleArray([...otherAnswers]);
+        const distractorOptions = shuffledOthers.slice(0, 3);
+        // 合并正确+干扰，并整体随机排序
+        let opts = [correctAnswer, ...distractorOptions];
+        return shuffleArray(opts);
+    }
+
+    // 随机洗牌函数
+    function shuffleArray(arr) {
+        for (let i = arr.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [arr[i], arr[j]] = [arr[j], arr[i]];
+        }
+        return arr;
+    }
+
+    // ---------- 全局状态 ----------
+    let currentIndex = 0;            // 当前第几题 (0~4)
+    let currentOptions = [];          // 当前题目的选项数组
+    let currentCorrectAnswer = "";
+    let gameActive = true;            // 游戏未通关
+    let isCompleted = false;
+    let waitingForNext = false;       // 防止快速连点
+    let currentQuestionText = "";     // 当前问句原文（仅用于播放）
+
+    // DOM 元素
+    const gameBodyEl = document.getElementById("gameBody");
+    const progressSpan = document.getElementById("progressText");
+
+    // ---------- 语音播放 (仅播放问句，不显示文本) ----------
+    function speakQuestion(questionText, onEndCallback = null) {
+        if (!window.speechSynthesis) {
+            alert("您的浏览器不支持语音合成，请使用 Chrome / Safari / Edge 等现代浏览器。");
+            return;
+        }
+        window.speechSynthesis.cancel(); // 避免重叠
+        const utterance = new SpeechSynthesisUtterance(questionText);
+        utterance.lang = 'en-US';
+        utterance.rate = 0.9;
+        utterance.pitch = 1.0;
+        // 尝试选择地道美式女声
+        const setVoice = () => {
+            const voices = window.speechSynthesis.getVoices();
+            let selected = voices.find(voice => voice.lang === 'en-US' && (voice.name.includes('Google') || voice.name.includes('Samantha') || voice.name.includes('Female')));
+            if (!selected) selected = voices.find(voice => voice.lang === 'en-US');
+            if (selected) utterance.voice = selected;
+        };
+        setVoice();
+        if (window.speechSynthesis.getVoices().length === 0) {
+            window.speechSynthesis.onvoiceschanged = () => {
+                const voices = window.speechSynthesis.getVoices();
+                const preferred = voices.find(voice => voice.lang === 'en-US' && (voice.name.includes('Google') || voice.name.includes('Samantha'))) ||
+                                  voices.find(voice => voice.lang === 'en-US');
+                if (preferred) utterance.voice = preferred;
+            };
+        }
+        if (onEndCallback) utterance.onend = onEndCallback;
+        window.speechSynthesis.speak(utterance);
+    }
+
+    // ---------- UI 消息 ----------
+    let msgTimeout = null;
+    function showMessage(text, isError = true) {
+        const msgDiv = document.getElementById("dynamicMessage");
+        if (!msgDiv) return;
+        if (msgTimeout) clearTimeout(msgTimeout);
+        msgDiv.innerHTML = `<span class="${isError ? 'error-msg' : 'success-msg'}">${escapeHtml(text)}</span>`;
+        if (!isError) {
+            msgTimeout = setTimeout(() => { if (msgDiv) msgDiv.innerHTML = ''; }, 1500);
+        } else {
+            msgTimeout = setTimeout(() => { if (msgDiv && msgDiv.innerHTML.includes('error-msg')) msgDiv.innerHTML = ''; }, 2000);
+        }
+    }
+    function clearMessage() {
+        const msgDiv = document.getElementById("dynamicMessage");
+        if (msgDiv) msgDiv.innerHTML = '';
+        if (msgTimeout) clearTimeout(msgTimeout);
+    }
+    function escapeHtml(str) {
+        return str.replace(/[&<>]/g, function(m) {
+            if (m === '&') return '&amp;';
+            if (m === '<') return '&lt;';
+            if (m === '>') return '&gt;';
+            return m;
+        });
+    }
+
+    // 刷新当前题目数据 (生成新选项)
+    function refreshCurrentQuestionData() {
+        currentOptions = generateOptionsForQuestion(currentIndex);
+        currentCorrectAnswer = QUESTIONS_DATA[currentIndex].correct;
+        currentQuestionText = QUESTIONS_DATA[currentIndex].question;
+    }
+
+    // 处理答案选择
+    function handleAnswer(selectedText) {
+        if (!gameActive || isCompleted || waitingForNext) return;
+        if (selectedText === currentCorrectAnswer) {
+            // 答对
+            clearMessage();
+            showMessage("✅ 完美！答对了！", false);
+            // 判断是否最后一题
+            if (currentIndex + 1 === QUESTIONS_DATA.length) {
+                completeGame();
+            } else {
+                waitingForNext = true;
+                setTimeout(() => {
+                    currentIndex++;
+                    refreshCurrentQuestionData();
+                    renderGame();   // 重新渲染 (无文本，只有喇叭和选项)
+                    waitingForNext = false;
+                }, 600);
+            }
+        } else {
+            // 答错：显示错误提示，不跳题，重新选择
+            showMessage("❌ 答错了！再点击喇叭听一遍问句，然后重新选择。", true);
+            // 不自动播放，尊重用户操作，但用户可手动按喇叭
+        }
+    }
+
+    // 渲染游戏界面：不显示问句文本，只有播放按钮 + 选项
+    function renderGame() {
+        if (isCompleted) return;
+        progressSpan.innerText = `第${currentIndex+1} / ${QUESTIONS_DATA.length}题`;
+        
+        // 生成 HTML: 没有问句文字，只有音频卡片 + 选项列表
+        let html = `
+            <div class="audio-card">
+                <button class="audio-btn" id="playAudioBtn">🔊 播放本句问句</button>
+                <div style="margin-top: 12px; font-size: 0.8rem; color: #6c757d;">🎧 请仔细听，然后选出正确答句</div>
+            </div>
+            <div class="options-grid" id="optionsGrid">
+        `;
+        
+        currentOptions.forEach((opt, idx) => {
+            html += `<button class="option-btn" data-opt-index="${idx}">${escapeHtml(opt)}</button>`;
+        });
+        
+        html += `</div>
+            <div class="message-area" id="dynamicMessage"></div>
+            <div class="control-buttons">
+                <button class="reset-btn" id="resetGameBtn">🔄 重新开始</button>
+            </div>
+        `;
+        
+        gameBodyEl.innerHTML = html;
+        
+        // 绑定播放按钮事件 (播放当前问句，无文本显示)
+        const playBtn = document.getElementById("playAudioBtn");
+        if (playBtn) {
+            playBtn.addEventListener("click", (e) => {
+                e.stopPropagation();
+                if (!gameActive || isCompleted) return;
+                speakQuestion(currentQuestionText);
+            });
+        }
+        
+        // 绑定选项按钮
+        const optBtns = document.querySelectorAll(".option-btn");
+        optBtns.forEach(btn => {
+            btn.addEventListener("click", (e) => {
+                if (!gameActive || isCompleted || waitingForNext) return;
+                const selectedAnswer = btn.innerText;
+                handleAnswer(selectedAnswer);
+            });
+        });
+        
+        // 重置按钮
+        const resetBtn = document.getElementById("resetGameBtn");
+        if (resetBtn) {
+            resetBtn.addEventListener("click", () => resetGame());
+        }
+        
+        clearMessage();
+        // 可选: 显示轻提示，告诉用户点击喇叭开始
+        setTimeout(() => {
+            if (!isCompleted && gameActive && document.getElementById("dynamicMessage") && !document.getElementById("dynamicMessage").innerHTML) {
+                showMessage("👆 点击上方喇叭，听问句后选择答案！", false);
+                setTimeout(() => clearMessage(), 2500);
+            }
+        }, 300);
+    }
+    
+    // 重置游戏
+    function resetGame() {
+        if (window.speechSynthesis) window.speechSynthesis.cancel();
+        currentIndex = 0;
+        gameActive = true;
+        isCompleted = false;
+        waitingForNext = false;
+        refreshCurrentQuestionData();
+        renderGame();
+    }
+    
+    // 通关海报生成
+    function completeGame() {
+        if (isCompleted) return;
+        isCompleted = true;
+        gameActive = false;
+        if (window.speechSynthesis) window.speechSynthesis.cancel();
+        generateAndShowPoster();
+    }
+    
+    // 生成通关海报 (Canvas)
+    function generateAndShowPoster() {
+        const totalQ = QUESTIONS_DATA.length;
+        const playerName = "听力小英雄";
+        const dateStr = new Date().toLocaleString();
+        
+        const canvas = document.createElement('canvas');
+        canvas.width = 700;
+        canvas.height = 500;
+        const ctx = canvas.getContext('2d');
+        
+        // 背景渐变
+        const grad = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+        grad.addColorStop(0, '#ffe6b3');
+        grad.addColorStop(1, '#c7e9fb');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        // 装饰星星
+        ctx.fillStyle = '#ffbf69';
+        for (let i = 0; i < 70; i++) {
+            ctx.beginPath();
+            ctx.arc(Math.random() * canvas.width, Math.random() * canvas.height, Math.random() * 3 + 1, 0, Math.PI * 2);
+            ctx.fill();
+        }
+        
+        ctx.font = 'bold 40px "Segoe UI", "Poppins", system-ui';
+        ctx.fillStyle = '#2c3e2f';
+        ctx.shadowBlur = 6;
+        ctx.shadowColor = "rgba(0,0,0,0.2)";
+        ctx.fillText("🏆 听力通关 🏆", canvas.width/2 - 150, 70);
+        
+        ctx.font = 'bold 32px "Segoe UI"';
+        ctx.fillStyle = '#2b5e3b';
+        ctx.fillText("纯听力大师", canvas.width/2 - 100, 130);
+        
+        ctx.font = '48px sans-serif';
+        ctx.fillStyle = '#f3b33d';
+        ctx.fillText("🎧✨", canvas.width/2 - 45, 200);
+        
+        ctx.font = 'bold 24px "Segoe UI"';
+        ctx.fillStyle = '#1e4660';
+        ctx.fillText(`${playerName} 同学`, canvas.width/2 - 100, 270);
+        
+        ctx.font = '22px system-ui';
+        ctx.fillStyle = '#2c3e66';
+        ctx.fillText(`完美答对 ${totalQ} 道听力题`, canvas.width/2 - 140, 335);
+        
+        ctx.font = '18px "Segoe UI"';
+        ctx.fillStyle = '#4a627a';
+        ctx.fillText(`通关时间：${dateStr}`, canvas.width/2 - 130, 400);
+        
+        ctx.font = 'italic 19px "Segoe UI"';
+        ctx.fillStyle = '#a5642c';
+        ctx.fillText("🌟 英语听力之星 🌟", canvas.width/2 - 110, 460);
+        ctx.shadowBlur = 0;
+        
+        const posterURL = canvas.toDataURL('image/png');
+        
+        const posterHTML = `
+            <div class="poster-area">
+                <h3 style="margin:0 0 8px; color:#2d4a2d;">🎉 挑战成功 🎉</h3>
+                <img class="poster-canvas" src="${posterURL}" alt="通关海报" style="max-width:100%; border-radius: 28px;">
+                <div class="poster-actions">
+                    <button class="play-again-btn" id="restartFromPosterBtn">🏅 再玩一次</button>
+                    <button class="play-again-btn" id="downloadPosterBtn" style="background:#3b6e8f;">📸 保存海报</button>
+                </div>
+                <p style="font-size:12px; margin-top:12px; color:#5a3e2a;">长按图片可保存至手机</p>
+            </div>
+        `;
+        gameBodyEl.innerHTML = posterHTML;
+        progressSpan.innerText = `🏆 通关 🏆`;
+        
+        const restartBtn = document.getElementById("restartFromPosterBtn");
+        if (restartBtn) {
+            restartBtn.addEventListener("click", () => {
+                isCompleted = false;
+                gameActive = true;
+                currentIndex = 0;
+                waitingForNext = false;
+                refreshCurrentQuestionData();
+                renderGame();
+            });
+        }
+        
+        const downloadBtn = document.getElementById("downloadPosterBtn");
+        if (downloadBtn) {
+            downloadBtn.addEventListener("click", () => {
+                const link = document.createElement('a');
+                link.download = 'hearing_champion.png';
+                link.href = posterURL;
+                link.click();
+                setTimeout(() => {
+                    showMessage("若未自动保存，请长按海报图片保存", false);
+                }, 200);
+            });
+        }
+    }
+    
+    // 初始化游戏
+    function initGame() {
+        currentIndex = 0;
+        gameActive = true;
+        isCompleted = false;
+        waitingForNext = false;
+        refreshCurrentQuestionData();
+        renderGame();
+        if (window.speechSynthesis) {
+            window.speechSynthesis.getVoices(); // 预加载语音列表
+        }
+    }
+    
+    initGame();
+</script>
+</body>
+</html>
