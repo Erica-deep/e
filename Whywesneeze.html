@@ -1,0 +1,1356 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>📖 英文朗读器 - Why We Sneeze</title>
+    <style>
+        :root {
+            --yellow-50: #fffde7;
+            --yellow-100: #fff9c4;
+            --yellow-200: #fff59d;
+            --yellow-300: #fff176;
+            --yellow-400: #ffee58;
+            --yellow-500: #fdd835;
+            --yellow-600: #fbc02d;
+            --yellow-700: #f9a825;
+            --yellow-800: #f57f17;
+            --purple-50: #faf5ff;
+            --purple-100: #f3e8ff;
+            --purple-200: #e9d5ff;
+            --purple-300: #d8b4fe;
+            --purple-400: #c084fc;
+            --purple-500: #a855f7;
+            --purple-600: #9333ea;
+            --purple-700: #7c3aed;
+            --purple-800: #6b21a8;
+            --white: #ffffff;
+            --gray-50: #f9fafb;
+            --gray-100: #f3f4f6;
+            --gray-200: #e5e7eb;
+            --gray-300: #d1d5db;
+            --gray-400: #9ca3af;
+            --gray-500: #6b7280;
+            --gray-600: #4b5563;
+            --gray-700: #374151;
+            --gray-800: #1f2937;
+            --gray-900: #111827;
+            --success: #10b981;
+            --danger: #ef4444;
+            --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+            --shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
+            --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.07), 0 2px 4px rgba(0, 0, 0, 0.06);
+            --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1), 0 4px 6px rgba(0, 0, 0, 0.05);
+            --shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.1), 0 10px 10px rgba(0, 0, 0, 0.04);
+            --radius: 12px;
+            --radius-lg: 16px;
+            --radius-xl: 20px;
+            --transition: 0.2s ease;
+            --transition-slow: 0.35s ease;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'Noto Sans SC', 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(160deg, #f5f0ff 0%, #ede4ff 15%, #e0d6ff 30%, #f0e8ff 50%, #f8f4ff 65%, #ede2ff 80%, #f3ecff 100%);
+            background-attachment: fixed;
+            min-height: 100vh;
+            min-height: 100dvh;
+            color: var(--gray-800);
+            line-height: 1.6;
+            -webkit-tap-highlight-color: transparent;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            padding-bottom: env(safe-area-inset-bottom, 20px);
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: -200px;
+            right: -150px;
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(circle, rgba(168, 85, 247, 0.10) 0%, transparent 70%);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 0;
+            animation: floatBg 20s ease-in-out infinite;
+        }
+        body::after {
+            content: '';
+            position: fixed;
+            bottom: -180px;
+            left: -120px;
+            width: 450px;
+            height: 450px;
+            background: radial-gradient(circle, rgba(139, 92, 246, 0.08) 0%, transparent 70%);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 0;
+            animation: floatBg2 25s ease-in-out infinite;
+        }
+
+        @keyframes floatBg {
+            0%,
+            100% {
+                transform: translate(0, 0) scale(1);
+            }
+            33% {
+                transform: translate(30px, -25px) scale(1.08);
+            }
+            66% {
+                transform: translate(-20px, 15px) scale(0.94);
+            }
+        }
+        @keyframes floatBg2 {
+            0%,
+            100% {
+                transform: translate(0, 0) scale(1);
+            }
+            33% {
+                transform: translate(-25px, 20px) scale(1.06);
+            }
+            66% {
+                transform: translate(20px, -15px) scale(0.92);
+            }
+        }
+
+        .app-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 16px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .app-header {
+            text-align: center;
+            padding: 20px 20px 10px;
+            position: relative;
+        }
+        .app-header .logo-icon {
+            font-size: 48px;
+            display: block;
+            margin-bottom: 6px;
+            animation: bounceIn 0.7s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        @keyframes bounceIn {
+            0% {
+                transform: scale(0.3);
+                opacity: 0;
+            }
+            50% {
+                transform: scale(1.08);
+            }
+            70% {
+                transform: scale(0.94);
+            }
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+        .app-header h1 {
+            font-size: 26px;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--purple-700), var(--purple-500), #7c3aed);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin: 0;
+            letter-spacing: -0.02em;
+        }
+        .app-header .subtitle {
+            font-size: 13px;
+            color: var(--gray-500);
+            margin-top: 4px;
+            font-weight: 400;
+        }
+
+        .main-card {
+            background: var(--white);
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow-xl);
+            padding: 20px 18px;
+            margin-bottom: 16px;
+            border: 1px solid rgba(168, 85, 247, 0.08);
+            position: relative;
+            overflow: hidden;
+            transition: var(--transition-slow);
+        }
+        .main-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--purple-400), var(--purple-600), var(--purple-500), var(--purple-700));
+            border-radius: 3px 3px 0 0;
+        }
+
+        .sentences-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .sentences-count {
+            font-weight: 700;
+            font-size: 15px;
+            color: var(--gray-700);
+        }
+        .article-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--purple-700);
+            text-align: center;
+            margin-bottom: 6px;
+            line-height: 1.4;
+        }
+        .article-topic {
+            display: inline-block;
+            background: var(--purple-100);
+            color: var(--purple-700);
+            font-size: 12px;
+            font-weight: 600;
+            padding: 4px 12px;
+            border-radius: 20px;
+            margin-bottom: 14px;
+            text-align: center;
+        }
+
+        .progress-container {
+            margin-top: 8px;
+            margin-bottom: 12px;
+        }
+        .progress-container.visible {
+            animation: fadeIn 0.3s ease;
+        }
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-6px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        .progress-label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            color: var(--gray-600);
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+        .progress-bar-outer {
+            height: 8px;
+            background: var(--gray-200);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        .progress-bar-inner {
+            height: 100%;
+            background: linear-gradient(90deg, var(--purple-400), var(--purple-600), var(--purple-700));
+            border-radius: 10px;
+            transition: width 0.4s ease;
+            width: 0%;
+        }
+
+        .sentences-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            max-height: 55vh;
+            max-height: 55dvh;
+            overflow-y: auto;
+            padding-right: 4px;
+            -webkit-overflow-scrolling: touch;
+            scroll-behavior: smooth;
+        }
+        .sentences-list::-webkit-scrollbar {
+            width: 4px;
+        }
+        .sentences-list::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .sentences-list::-webkit-scrollbar-thumb {
+            background: var(--gray-300);
+            border-radius: 10px;
+        }
+
+        .sentence-card {
+            background: var(--white);
+            border: 1.5px solid var(--gray-200);
+            border-radius: var(--radius);
+            padding: 14px 16px;
+            transition: var(--transition);
+            position: relative;
+            cursor: pointer;
+            animation: slideUp 0.35s ease forwards;
+            opacity: 0;
+            -webkit-tap-highlight-color: transparent;
+        }
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(12px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* 黄色高亮 - 正在播放 */
+        .sentence-card.playing {
+            background: linear-gradient(135deg, #fff9c4 0%, #fff176 100%) !important;
+            border: 2.5px solid #f9a825 !important;
+            box-shadow: 0 0 0 8px rgba(251, 192, 45, 0.18), 0 8px 28px rgba(249, 168, 37, 0.28) !important;
+            z-index: 2;
+            transform: scale(1.01);
+            transition: all 0.25s ease;
+        }
+        .sentence-card.playing .sentence-index {
+            background: #f9a825 !important;
+            color: #1f2937 !important;
+            font-weight: 700;
+            animation: pulseBadge 1.6s ease-in-out infinite;
+        }
+        @keyframes pulseBadge {
+            0%,
+            100% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.1);
+            }
+        }
+        .sentence-card.playing .sentence-text {
+            color: #1f2937 !important;
+            font-weight: 600;
+        }
+        .sentence-card .sentence-header {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+        }
+        .sentence-card .sentence-index {
+            font-weight: 700;
+            color: var(--purple-500);
+            font-size: 12px;
+            min-width: 28px;
+            text-align: center;
+            background: var(--purple-100);
+            border-radius: 20px;
+            padding: 4px 8px;
+            flex-shrink: 0;
+            transition: var(--transition);
+        }
+        .sentence-card .sentence-text {
+            flex: 1;
+            font-size: 15px;
+            color: var(--gray-800);
+            line-height: 1.65;
+            word-break: break-word;
+            font-weight: 500;
+        }
+        .sentence-card .sentence-translation {
+            margin-top: 8px;
+            padding-top: 8px;
+            border-top: 1px dashed var(--gray-200);
+            font-size: 13px;
+            color: var(--gray-600);
+            line-height: 1.5;
+            display: flex;
+            align-items: flex-start;
+            gap: 6px;
+        }
+        .sentence-card .translation-icon {
+            font-size: 14px;
+            flex-shrink: 0;
+            opacity: 0.8;
+        }
+        .sentence-card .translation-loading {
+            color: var(--gray-400);
+            font-size: 12px;
+            font-style: italic;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .sentence-card .translation-loading .mini-spinner {
+            width: 13px;
+            height: 13px;
+            border: 2px solid var(--gray-300);
+            border-top-color: var(--purple-500);
+            border-radius: 50%;
+            animation: spin 0.7s linear infinite;
+            display: inline-block;
+        }
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .btn-play-sentence {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 2px solid var(--purple-300);
+            background: var(--white);
+            cursor: pointer;
+            font-size: 17px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: var(--transition);
+            flex-shrink: 0;
+            -webkit-tap-highlight-color: transparent;
+            outline: none;
+            color: var(--purple-600);
+            flex-shrink: 0;
+        }
+        .btn-play-sentence:hover {
+            background: var(--purple-50);
+            border-color: var(--purple-500);
+            box-shadow: 0 0 0 8px rgba(168, 85, 247, 0.06);
+        }
+        .btn-play-sentence:active {
+            transform: scale(0.86);
+            transition: 0.08s ease;
+        }
+        .btn-play-sentence.playing {
+            background: #f57f17 !important;
+            border-color: #f57f17 !important;
+            color: white !important;
+            animation: pulseBtn 1.2s ease-in-out infinite;
+            box-shadow: 0 0 0 8px rgba(245, 127, 23, 0.25);
+        }
+        @keyframes pulseBtn {
+            0%,
+            100% {
+                box-shadow: 0 0 0 4px rgba(245, 127, 23, 0.25);
+            }
+            50% {
+                box-shadow: 0 0 0 16px rgba(245, 127, 23, 0);
+            }
+        }
+
+        .bottom-controls {
+            background: var(--white);
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow-xl);
+            padding: 16px 18px;
+            position: sticky;
+            bottom: 16px;
+            z-index: 10;
+            border: 1px solid rgba(168, 85, 247, 0.08);
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+            justify-content: center;
+        }
+        .speed-selector {
+            display: flex;
+            gap: 3px;
+            background: var(--gray-100);
+            border-radius: var(--radius);
+            padding: 3px;
+        }
+        .speed-btn {
+            padding: 7px 12px;
+            border: none;
+            background: transparent;
+            border-radius: calc(var(--radius) - 4px);
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--gray-600);
+            transition: var(--transition);
+            font-family: inherit;
+            -webkit-tap-highlight-color: transparent;
+            outline: none;
+            white-space: nowrap;
+            min-width: 38px;
+            text-align: center;
+        }
+        .speed-btn.active {
+            background: var(--white);
+            color: var(--purple-700);
+            box-shadow: var(--shadow-sm);
+        }
+        .speed-btn:active {
+            transform: scale(0.92);
+        }
+        .speed-label {
+            font-size: 12px;
+            color: var(--gray-500);
+            font-weight: 500;
+            margin-right: 2px;
+            white-space: nowrap;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 7px;
+            padding: 11px 20px;
+            border: none;
+            border-radius: var(--radius);
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            font-family: inherit;
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+            -webkit-user-select: none;
+            outline: none;
+            white-space: nowrap;
+            letter-spacing: 0.01em;
+        }
+        .btn:active {
+            transform: scale(0.95);
+            transition: 0.08s ease;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, var(--purple-600), var(--purple-700));
+            color: white;
+            box-shadow: 0 4px 14px rgba(124, 58, 237, 0.3);
+        }
+        .btn-primary:hover {
+            box-shadow: 0 6px 20px rgba(124, 58, 237, 0.4);
+            transform: translateY(-1px);
+        }
+        .btn-secondary {
+            background: var(--gray-100);
+            color: var(--gray-700);
+        }
+        .btn-secondary:hover {
+            background: var(--gray-200);
+        }
+        .btn-sm {
+            padding: 7px 14px;
+            font-size: 13px;
+            border-radius: var(--radius);
+        }
+        .btn-continuous {
+            padding: 12px 24px;
+            font-size: 15px;
+            border-radius: 30px;
+            font-weight: 700;
+            letter-spacing: 0.02em;
+            gap: 8px;
+            min-width: 140px;
+        }
+        .btn-continuous.playing {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            box-shadow: 0 4px 16px rgba(239, 68, 68, 0.35);
+            animation: pulseStop 1.5s ease-in-out infinite;
+        }
+        @keyframes pulseStop {
+            0%,
+            100% {
+                box-shadow: 0 4px 16px rgba(239, 68, 68, 0.35);
+            }
+            50% {
+                box-shadow: 0 4px 28px rgba(239, 68, 68, 0.55);
+            }
+        }
+
+        .toast {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%) translateY(-120px);
+            background: var(--gray-900);
+            color: white;
+            padding: 12px 22px;
+            border-radius: 30px;
+            font-size: 14px;
+            font-weight: 600;
+            z-index: 1000;
+            transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+            pointer-events: none;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            text-align: center;
+            max-width: 90vw;
+        }
+        .toast.show {
+            transform: translateX(-50%) translateY(0);
+        }
+        .toast.success {
+            background: var(--success);
+        }
+
+        .reset-btn-wrap {
+            text-align: center;
+            margin-top: 6px;
+        }
+        .btn-reset {
+            font-size: 12px;
+            color: var(--purple-600);
+            background: none;
+            border: none;
+            cursor: pointer;
+            text-decoration: underline;
+            padding: 4px 8px;
+            font-family: inherit;
+            -webkit-tap-highlight-color: transparent;
+            opacity: 0.7;
+            transition: opacity 0.2s;
+        }
+        .btn-reset:hover {
+            opacity: 1;
+        }
+
+        @media (max-width: 600px) {
+            .app-container {
+                padding: 8px;
+            }
+            .main-card {
+                padding: 14px 12px;
+                border-radius: var(--radius-lg);
+            }
+            .app-header h1 {
+                font-size: 22px;
+            }
+            .app-header .logo-icon {
+                font-size: 38px;
+            }
+            .article-title {
+                font-size: 16px;
+            }
+            .sentence-card {
+                padding: 12px 13px;
+            }
+            .sentence-card .sentence-text {
+                font-size: 14px;
+            }
+            .btn-play-sentence {
+                width: 36px;
+                height: 36px;
+                font-size: 15px;
+            }
+            .bottom-controls {
+                padding: 12px 10px;
+                gap: 6px;
+                border-radius: var(--radius-lg);
+                bottom: 8px;
+            }
+            .btn-continuous {
+                padding: 10px 16px;
+                font-size: 13px;
+                min-width: 110px;
+            }
+            .speed-btn {
+                padding: 6px 9px;
+                font-size: 11px;
+                min-width: 30px;
+            }
+        }
+        @media (max-width: 380px) {
+            .app-header h1 {
+                font-size: 19px;
+            }
+            .article-title {
+                font-size: 14px;
+            }
+            .sentence-card .sentence-text {
+                font-size: 13px;
+            }
+            .sentence-card .sentence-translation {
+                font-size: 11px;
+            }
+            .bottom-controls {
+                padding: 10px 6px;
+                gap: 4px;
+            }
+            .speed-btn {
+                padding: 5px 7px;
+                font-size: 10px;
+                min-width: 26px;
+            }
+            .btn-continuous {
+                padding: 9px 12px;
+                font-size: 12px;
+                min-width: 90px;
+                border-radius: 24px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="app-container">
+        <!-- 头部 -->
+        <header class="app-header">
+            <span class="logo-icon">🤧</span>
+            <h1>英文朗读器</h1>
+            <p class="subtitle">Achoo! Why We Sneeze</p>
+        </header>
+
+        <!-- 句子列表卡片 -->
+        <div class="main-card" id="sentencesCard">
+            <div style="text-align:center;">
+                <div class="article-title">🤧 Achoo! Why We Sneeze</div>
+                <span class="article-topic">📖 科普短文 · 打喷嚏的奥秘</span>
+            </div>
+            <div class="sentences-header">
+                <span class="sentences-count" id="sentencesCount">📝 共 0 个句子</span>
+                <button class="btn btn-secondary btn-sm" id="btnResetTranslation">🔄 重新翻译</button>
+            </div>
+            <!-- 翻译进度 -->
+            <div class="progress-container" id="progressContainer">
+                <div class="progress-label">
+                    <span>🌐 翻译进度</span>
+                    <span id="progressText">0/0</span>
+                </div>
+                <div class="progress-bar-outer">
+                    <div class="progress-bar-inner" id="progressBar"></div>
+                </div>
+            </div>
+            <!-- 句子列表 -->
+            <div class="sentences-list" id="sentencesList"></div>
+        </div>
+
+        <!-- 底部控制栏 -->
+        <div class="bottom-controls" id="bottomControls">
+            <span class="speed-label">🎵 语速：</span>
+            <div class="speed-selector" id="speedSelector">
+                <button class="speed-btn" data-speed="0.6">0.6x</button>
+                <button class="speed-btn" data-speed="0.75">0.75x</button>
+                <button class="speed-btn active" data-speed="0.9">0.9x</button>
+                <button class="speed-btn" data-speed="1.05">1.05x</button>
+                <button class="speed-btn" data-speed="1.2">1.2x</button>
+            </div>
+            <button class="btn btn-primary btn-continuous" id="btnContinuousPlay">
+                ▶️ 连续朗读
+            </button>
+            <button class="btn btn-secondary btn-sm" id="btnStopAll" style="display:none;">
+                ⏹️ 停止
+            </button>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div class="toast" id="toast"></div>
+
+    <script>
+        (function() {
+            // ==================== 固定文章内容 ====================
+            const ARTICLE_TEXT = `Achoo! When you have a cold, you often sneeze. Why? Because germs make a home in your nose, and they tickle you! Sneezing is your body's way of sending germs out of your nose. Many animals sneeze, too! What happens? Your nose doesn't like the germs, so it sends a message to a part of your brain called the "sneeze center." The sneeze center sends a message to your muscles. Then all your muscles push hard. Even your eyes push. That's why you close your eyes when you sneeze. You should have a tissue ready because the sneeze happens very quickly. A sneeze can travel as fast as a car! Some people sneeze when they don't have a cold. It happens when they go out into the sunshine. They are called "photic sneezers." Photic sneezing is an inherited trait. It comes from one of your parents. Do you know anyone who sneezes because of the sun?`;
+
+            // ==================== DOM 引用 ====================
+            const sentencesCard = document.getElementById('sentencesCard');
+            const sentencesList = document.getElementById('sentencesList');
+            const sentencesCount = document.getElementById('sentencesCount');
+            const progressContainer = document.getElementById('progressContainer');
+            const progressBar = document.getElementById('progressBar');
+            const progressText = document.getElementById('progressText');
+            const bottomControls = document.getElementById('bottomControls');
+            const speedSelector = document.getElementById('speedSelector');
+            const btnContinuousPlay = document.getElementById('btnContinuousPlay');
+            const btnStopAll = document.getElementById('btnStopAll');
+            const btnResetTranslation = document.getElementById('btnResetTranslation');
+            const toast = document.getElementById('toast');
+            const speedBtns = document.querySelectorAll('.speed-btn');
+
+            // ==================== 状态管理 ====================
+            let sentences = [];
+            let currentSpeed = 0.9;
+            let isContinuousPlaying = false;
+            let currentPlayingIndex = -1;
+            let isTranslating = false;
+            let translationAbortController = null;
+
+            // ==================== Toast ====================
+            let toastTimer;
+
+            function showToast(msg, type = '') {
+                clearTimeout(toastTimer);
+                toast.textContent = msg;
+                toast.className = 'toast ' + type + ' show';
+                toastTimer = setTimeout(() => {
+                    toast.classList.remove('show');
+                }, 2500);
+            }
+
+            // ==================== 智能句子拆分 ====================
+            function splitSentences(text) {
+                const abbreviations = [
+                    'Mr', 'Mrs', 'Ms', 'Dr', 'Prof', 'Sr', 'Jr', 'St', 'Ave', 'Blvd', 'Rd',
+                    'etc', 'e.g', 'i.e', 'vs', 'Inc', 'Corp', 'Dept', 'Est', 'Approx',
+                    'Capt', 'Col', 'Gen', 'Lt', 'Maj', 'Sgt', 'Rev', 'Hon', 'Gov', 'Sen',
+                    'Rep', 'Amb', 'Pres', 'Sec', 'Treas', 'Adm', 'Cmdr', 'Comm', 'Dir',
+                    'Exec', 'Mgr', 'Supr', 'Vol', 'Ch', 'P.S', 'R.S.V.P', 'a.m', 'p.m',
+                    'No', 'Nos', 'Art', 'Fig', 'Tab', 'Eq', 'Al', 'App', 'Avg', 'Max',
+                    'Min', 'Temp', 'Perm', 'Cont', 'Ed', 'Eds', 'Trans', 'Publ', 'Univ',
+                    'Assoc', 'Assn', 'Bros', 'Co', 'Ltd', 'Misc', 'approx', 'esp',
+                    'Jan', 'Feb', 'Mar', 'Apr', 'Jun', 'Jul', 'Aug', 'Sep', 'Sept', 'Oct', 'Nov', 'Dec',
+                    'Mon', 'Tue', 'Tues', 'Wed', 'Thu', 'Thur', 'Thurs', 'Fri', 'Sat', 'Sun',
+                    'U.S', 'U.K', 'U.N', 'E.U', 'N.A.T.O',
+                ];
+
+                let protectedText = text;
+                const markerMap = {};
+                let markerCounter = 0;
+                const sortedAbbr = [...abbreviations].sort((a, b) => b.length - a.length);
+
+                for (const abbr of sortedAbbr) {
+                    const escapedAbbr = abbr.replace(/\./g, '\\.');
+                    const regex = new RegExp('\\b' + escapedAbbr + '\\.', 'gi');
+                    protectedText = protectedText.replace(regex, (match) => {
+                        const marker = `__ABBR_MARKER_${markerCounter}__`;
+                        markerMap[marker] = match;
+                        markerCounter++;
+                        return marker;
+                    });
+                }
+
+                const sentenceRegex = /([.!?]+)([\s\n\r]+|$)/g;
+                const rawParts = [];
+                let lastIndex = 0;
+                let match;
+
+                while ((match = sentenceRegex.exec(protectedText)) !== null) {
+                    const end = match.index + match[1].length;
+                    rawParts.push(protectedText.substring(lastIndex, end));
+                    lastIndex = match.index + match[0].length;
+                }
+                if (lastIndex < protectedText.length) {
+                    const remaining = protectedText.substring(lastIndex).trim();
+                    if (remaining) rawParts.push(remaining);
+                }
+
+                const restoredParts = rawParts.map(part => {
+                    let restored = part;
+                    for (const [marker, original] of Object.entries(markerMap)) {
+                        restored = restored.replace(marker, original);
+                    }
+                    return restored.trim();
+                });
+
+                const filtered = restoredParts.filter(s => s.length > 1 && /[a-zA-Z]/.test(s));
+
+                const merged = [];
+                for (const s of filtered) {
+                    if (merged.length > 0 && s.length < 4 && !/[.!?]$/.test(s) && /^[a-z]/i.test(s)) {
+                        merged[merged.length - 1] += ' ' + s;
+                    } else {
+                        merged.push(s);
+                    }
+                }
+
+                return merged;
+            }
+
+            // ==================== 处理文本 ====================
+            function processText(text) {
+                stopAllPlayback();
+                if (translationAbortController) {
+                    translationAbortController.abort();
+                    translationAbortController = null;
+                }
+                isTranslating = false;
+                currentPlayingIndex = -1;
+                isContinuousPlaying = false;
+                btnContinuousPlay.classList.remove('playing');
+                btnContinuousPlay.innerHTML = '▶️ 连续朗读';
+                btnStopAll.style.display = 'none';
+
+                const rawSentences = splitSentences(text);
+                sentences = rawSentences.map((s, i) => ({
+                    index: i,
+                    text: s,
+                    translation: '',
+                    translated: false,
+                }));
+
+                renderAllSentences();
+                sentencesCount.textContent = '📝 共 ' + sentences.length + ' 个句子';
+                progressContainer.classList.add('visible');
+                progressBar.style.width = '0%';
+                progressText.textContent = '0/' + sentences.length;
+
+                if (sentences.length > 0) {
+                    startTranslationQueue();
+                }
+            }
+
+            // ==================== 渲染句子列表 ====================
+            function renderAllSentences() {
+                sentencesList.innerHTML = '';
+                sentences.forEach((s, i) => {
+                    const card = createSentenceCard(s, i);
+                    card.style.animationDelay = (i * 0.04) + 's';
+                    sentencesList.appendChild(card);
+                });
+            }
+
+            function createSentenceCard(sentence, index) {
+                const card = document.createElement('div');
+                card.className = 'sentence-card';
+                card.dataset.index = index;
+                card.id = 'sentenceCard-' + index;
+
+                const header = document.createElement('div');
+                header.className = 'sentence-header';
+
+                const indexBadge = document.createElement('span');
+                indexBadge.className = 'sentence-index';
+                indexBadge.textContent = '#' + (index + 1);
+
+                const textEl = document.createElement('span');
+                textEl.className = 'sentence-text';
+                textEl.textContent = sentence.text;
+
+                const playBtn = document.createElement('button');
+                playBtn.className = 'btn-play-sentence';
+                playBtn.innerHTML = '▶️';
+                playBtn.title = '朗读此句';
+                playBtn.setAttribute('aria-label', '朗读第' + (index + 1) + '句');
+                playBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    playSingleSentence(index);
+                });
+
+                header.appendChild(indexBadge);
+                header.appendChild(textEl);
+                header.appendChild(playBtn);
+                card.appendChild(header);
+
+                const translationDiv = document.createElement('div');
+                translationDiv.className = 'sentence-translation';
+                translationDiv.id = 'translation-' + index;
+
+                if (sentence.translated && sentence.translation) {
+                    translationDiv.innerHTML =
+                        '<span class="translation-icon">🇨🇳</span><span>' + escapeHTML(sentence.translation) +
+                        '</span>';
+                } else {
+                    translationDiv.innerHTML =
+                        '<span class="translation-loading"><span class="mini-spinner"></span>翻译中...</span>';
+                }
+                card.appendChild(translationDiv);
+
+                card.addEventListener('click', () => {
+                    playSingleSentence(index);
+                });
+
+                return card;
+            }
+
+            function updateTranslationDisplay(index, translation) {
+                const translationDiv = document.getElementById('translation-' + index);
+                if (translationDiv) {
+                    translationDiv.innerHTML =
+                        '<span class="translation-icon">🇨🇳</span><span>' + escapeHTML(translation) + '</span>';
+                }
+            }
+
+            function updatePlayButtonState(index, isPlaying) {
+                document.querySelectorAll('.btn-play-sentence').forEach(btn => {
+                    btn.classList.remove('playing');
+                    btn.innerHTML = '▶️';
+                });
+                document.querySelectorAll('.sentence-card').forEach(card => {
+                    card.classList.remove('playing');
+                });
+
+                if (isPlaying && index >= 0) {
+                    const btn = document.querySelector('#sentenceCard-' + index + ' .btn-play-sentence');
+                    const card = document.getElementById('sentenceCard-' + index);
+                    if (btn) {
+                        btn.classList.add('playing');
+                        btn.innerHTML = '🔊';
+                    }
+                    if (card) {
+                        card.classList.add('playing');
+                        card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
+                }
+            }
+
+            function escapeHTML(str) {
+                const div = document.createElement('div');
+                div.textContent = str;
+                return div.innerHTML;
+            }
+
+            // ==================== 翻译功能 ====================
+            async function startTranslationQueue() {
+                if (isTranslating) return;
+                isTranslating = true;
+                translationAbortController = new AbortController();
+                const signal = translationAbortController.signal;
+
+                const pendingIndices = [];
+                sentences.forEach((s, i) => {
+                    if (!s.translated) {
+                        pendingIndices.push(i);
+                    }
+                });
+
+                if (pendingIndices.length === 0) {
+                    isTranslating = false;
+                    progressBar.style.width = '100%';
+                    progressText.textContent = sentences.length + '/' + sentences.length;
+                    return;
+                }
+
+                progressContainer.classList.add('visible');
+                const totalToTranslate = pendingIndices.length;
+                const alreadyDone = sentences.length - totalToTranslate;
+                let completed = 0;
+
+                progressBar.style.width = (alreadyDone / Math.max(sentences.length, 1) * 100) + '%';
+                progressText.textContent = alreadyDone + '/' + sentences.length;
+
+                for (const idx of pendingIndices) {
+                    if (signal.aborted) break;
+
+                    try {
+                        const translation = await translateText(sentences[idx].text, signal);
+                        if (!signal.aborted) {
+                            sentences[idx].translation = translation;
+                            sentences[idx].translated = true;
+                            updateTranslationDisplay(idx, translation);
+                            completed++;
+                            const totalDone = alreadyDone + completed;
+                            progressBar.style.width = (totalDone / Math.max(sentences.length, 1) * 100) + '%';
+                            progressText.textContent = totalDone + '/' + sentences.length;
+                        }
+                    } catch (err) {
+                        if (err.name === 'AbortError' || signal.aborted) break;
+                        console.error('翻译失败 (句子' + idx + '):', err);
+                        if (!signal.aborted) {
+                            sentences[idx].translation = '[翻译失败]';
+                            sentences[idx].translated = true;
+                            updateTranslationDisplay(idx, '[翻译失败，请稍后重试]');
+                            completed++;
+                            const totalDone = alreadyDone + completed;
+                            progressBar.style.width = (totalDone / Math.max(sentences.length, 1) * 100) + '%';
+                            progressText.textContent = totalDone + '/' + sentences.length;
+                        }
+                    }
+
+                    if (!signal.aborted && completed < totalToTranslate) {
+                        await sleep(350, signal);
+                    }
+                }
+
+                if (!signal.aborted) {
+                    progressBar.style.width = '100%';
+                    progressText.textContent = sentences.length + '/' + sentences.length;
+                    setTimeout(() => {
+                        if (sentences.every(s => s.translated)) {
+                            progressContainer.classList.remove('visible');
+                        }
+                    }, 2000);
+                }
+                isTranslating = false;
+                translationAbortController = null;
+            }
+
+            async function translateText(text, signal) {
+                const url = 'https://api.mymemory.translated.net/get?q=' +
+                    encodeURIComponent(text) + '&langpair=en|zh&de=' + encodeURIComponent('demo@reader.app');
+
+                const response = await fetch(url, {
+                    signal,
+                    method: 'GET',
+                });
+
+                if (!response.ok) {
+                    throw new Error('HTTP ' + response.status);
+                }
+
+                const data = await response.json();
+                if (data.responseStatus === 200 && data.responseData && data.responseData.translatedText) {
+                    return data.responseData.translatedText;
+                } else if (data.responseStatus === 403 || data.responseStatus === 429) {
+                    throw new Error('API limit reached');
+                } else {
+                    throw new Error('Translation API error: ' + (data.responseStatus || 'unknown'));
+                }
+            }
+
+            function sleep(ms, signal) {
+                return new Promise((resolve, reject) => {
+                    const timer = setTimeout(resolve, ms);
+                    if (signal) {
+                        signal.addEventListener('abort', () => {
+                            clearTimeout(timer);
+                            reject(new DOMException('Aborted', 'AbortError'));
+                        });
+                    }
+                });
+            }
+
+            // ==================== 语音功能 ====================
+            function getBestVoice() {
+                const voices = speechSynthesis.getVoices();
+                if (voices.length === 0) return null;
+                let best = null;
+                for (const v of voices) {
+                    if (v.lang === 'en-US' && v.name.includes('Google')) {
+                        best = v;
+                        break;
+                    }
+                }
+                if (!best) {
+                    for (const v of voices) {
+                        if (v.lang === 'en-US') {
+                            best = v;
+                            break;
+                        }
+                    }
+                }
+                if (!best) {
+                    for (const v of voices) {
+                        if (v.lang.startsWith('en-')) {
+                            best = v;
+                            break;
+                        }
+                    }
+                }
+                if (!best && voices.length > 0) {
+                    best = voices[0];
+                }
+                return best;
+            }
+
+            function playSingleSentence(index) {
+                if (index < 0 || index >= sentences.length) return;
+                if (isContinuousPlaying) {
+                    stopContinuousPlay();
+                }
+                speechSynthesis.cancel();
+
+                const voice = getBestVoice();
+                const utterance = new SpeechSynthesisUtterance(sentences[index].text);
+                utterance.rate = currentSpeed;
+                utterance.pitch = 1.0;
+                utterance.volume = 1.0;
+                if (voice) {
+                    utterance.voice = voice;
+                }
+                utterance.lang = 'en-US';
+
+                currentPlayingIndex = index;
+                updatePlayButtonState(index, true);
+
+                utterance.onend = () => {
+                    if (currentPlayingIndex === index && !isContinuousPlaying) {
+                        currentPlayingIndex = -1;
+                        updatePlayButtonState(-1, false);
+                    }
+                };
+                utterance.onerror = (e) => {
+                    console.error('语音播放错误:', e);
+                    if (currentPlayingIndex === index && !isContinuousPlaying) {
+                        currentPlayingIndex = -1;
+                        updatePlayButtonState(-1, false);
+                    }
+                    if (e.error === 'not-allowed') {
+                        showToast('⚠️ 请先点击页面任意位置激活语音功能', 'error');
+                    }
+                };
+
+                speechSynthesis.speak(utterance);
+            }
+
+            function startContinuousPlay() {
+                if (sentences.length === 0) {
+                    showToast('⚠️ 没有可朗读的句子', 'error');
+                    return;
+                }
+                if (isContinuousPlaying) {
+                    stopContinuousPlay();
+                    return;
+                }
+
+                isContinuousPlaying = true;
+                btnContinuousPlay.classList.add('playing');
+                btnContinuousPlay.innerHTML = '⏸️ 停止朗读';
+                btnStopAll.style.display = '';
+                currentPlayingIndex = 0;
+                playNextInSequence();
+            }
+
+            function playNextInSequence() {
+                if (!isContinuousPlaying) return;
+                if (currentPlayingIndex >= sentences.length) {
+                    stopContinuousPlay();
+                    showToast('✅ 全部朗读完成！', 'success');
+                    return;
+                }
+
+                const voice = getBestVoice();
+                const utterance = new SpeechSynthesisUtterance(sentences[currentPlayingIndex].text);
+                utterance.rate = currentSpeed;
+                utterance.pitch = 1.0;
+                utterance.volume = 1.0;
+                if (voice) {
+                    utterance.voice = voice;
+                }
+                utterance.lang = 'en-US';
+
+                const idx = currentPlayingIndex;
+                updatePlayButtonState(idx, true);
+
+                utterance.onend = () => {
+                    if (isContinuousPlaying && currentPlayingIndex === idx) {
+                        currentPlayingIndex++;
+                        setTimeout(() => {
+                            playNextInSequence();
+                        }, 300);
+                    }
+                };
+                utterance.onerror = (e) => {
+                    console.error('连续播放错误:', e);
+                    if (e.error === 'not-allowed') {
+                        showToast('⚠️ 语音播放被阻止，请重新点击连续朗读', 'error');
+                        stopContinuousPlay();
+                    } else if (isContinuousPlaying && currentPlayingIndex === idx) {
+                        currentPlayingIndex++;
+                        setTimeout(() => {
+                            playNextInSequence();
+                        }, 500);
+                    }
+                };
+
+                speechSynthesis.speak(utterance);
+            }
+
+            function stopContinuousPlay() {
+                isContinuousPlaying = false;
+                speechSynthesis.cancel();
+                currentPlayingIndex = -1;
+                updatePlayButtonState(-1, false);
+                btnContinuousPlay.classList.remove('playing');
+                btnContinuousPlay.innerHTML = '▶️ 连续朗读';
+                btnStopAll.style.display = 'none';
+            }
+
+            function stopAllPlayback() {
+                isContinuousPlaying = false;
+                speechSynthesis.cancel();
+                currentPlayingIndex = -1;
+                updatePlayButtonState(-1, false);
+                btnContinuousPlay.classList.remove('playing');
+                btnContinuousPlay.innerHTML = '▶️ 连续朗读';
+                btnStopAll.style.display = 'none';
+            }
+
+            // ==================== 重新翻译 ====================
+            function resetTranslation() {
+                if (isTranslating && translationAbortController) {
+                    translationAbortController.abort();
+                    translationAbortController = null;
+                }
+                isTranslating = false;
+                sentences.forEach(s => {
+                    s.translation = '';
+                    s.translated = false;
+                });
+                renderAllSentences();
+                progressContainer.classList.add('visible');
+                progressBar.style.width = '0%';
+                progressText.textContent = '0/' + sentences.length;
+                if (sentences.length > 0) {
+                    startTranslationQueue();
+                }
+                showToast('🔄 正在重新获取翻译...', '');
+            }
+
+            btnResetTranslation.addEventListener('click', resetTranslation);
+
+            // ==================== 语速调节 ====================
+            speedBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    speedBtns.forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    currentSpeed = parseFloat(btn.dataset.speed);
+                    if (isContinuousPlaying) {
+                        const idx = currentPlayingIndex;
+                        speechSynthesis.cancel();
+                        if (idx >= 0 && idx < sentences.length) {
+                            currentPlayingIndex = idx;
+                            setTimeout(() => playNextInSequence(), 100);
+                        }
+                    }
+                });
+            });
+
+            // ==================== 连续朗读按钮 ====================
+            btnContinuousPlay.addEventListener('click', () => {
+                if (isContinuousPlaying) {
+                    stopContinuousPlay();
+                } else {
+                    startContinuousPlay();
+                }
+            });
+
+            // ==================== 停止按钮 ====================
+            btnStopAll.addEventListener('click', stopAllPlayback);
+
+            // ==================== 键盘快捷键 ====================
+            document.addEventListener('keydown', (e) => {
+                if (e.key === ' ' && e.target === document.body && sentences.length > 0) {
+                    e.preventDefault();
+                    if (isContinuousPlaying) {
+                        stopContinuousPlay();
+                    } else {
+                        startContinuousPlay();
+                    }
+                }
+                if (e.key === 'Escape') {
+                    stopAllPlayback();
+                }
+            });
+
+            // ==================== 预加载语音 ====================
+            function preloadVoices() {
+                const voices = speechSynthesis.getVoices();
+                if (voices.length > 0 && !getBestVoice()) {
+                    // 触发加载
+                }
+            }
+            speechSynthesis.onvoiceschanged = preloadVoices;
+            document.addEventListener('touchstart', preloadVoices, { once: true });
+            document.addEventListener('click', preloadVoices, { once: true });
+
+            // ==================== 初始化 ====================
+            function init() {
+                if (!('speechSynthesis' in window)) {
+                    showToast('⚠️ 您的浏览器不支持语音合成功能', 'error');
+                    console.warn('SpeechSynthesis API 不受支持');
+                }
+                processText(ARTICLE_TEXT);
+                console.log('📖 英文朗读器已就绪 - 文章: Achoo! Why We Sneeze');
+                console.log('  - 共 ' + sentences.length + ' 个句子待朗读');
+            }
+
+            // 启动
+            init();
+
+        })();
+    </script>
+</body>
+</html>
