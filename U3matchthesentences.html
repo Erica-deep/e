@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>阳光英语乐园 - 问答匹配大冒险 | Fun in the Sun</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Anime.js CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        sun: '#FFB347',
+                        grass: '#6FBF4C',
+                        sky: '#4A90E2',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* 卡片摇晃动画 */
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+        .shake-card {
+            animation: shake 0.3s ease-in-out 0s 1;
+            background-color: #fee2e2 !important;
+            border-color: #ef4444 !important;
+            color: #b91c1c !important;
+        }
+        /* 正确匹配后的绿色卡片样式：不可点击，无闪烁 */
+        .card-green {
+            background-color: #d1fae5 !important;
+            border-color: #10b981 !important;
+            color: #065f46 !important;
+            cursor: default !important;
+            pointer-events: none;
+            transform: scale(0.98);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+        /* 高亮选中的卡片 */
+        .card-selected {
+            background-color: #fef9c3 !important;
+            border-color: #f59e0b !important;
+            box-shadow: 0 4px 12px rgba(245,158,11,0.3);
+            transform: scale(1.01);
+        }
+        .card-item {
+            transition: all 0.2s ease;
+            cursor: pointer;
+            user-select: none;
+        }
+        /* 禁用全局点击锁时的效果 */
+        .pointer-none {
+            pointer-events: none;
+        }
+        .progress-bar {
+            transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        /* 卡片入场动画初始样式（仅关卡切换时使用） */
+        .card-enter {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        button, .card-item {
+            min-height: 44px;
+        }
+        body {
+            background: linear-gradient(145deg, #FFE9B0 0%, #FFD966 100%);
+            font-family: 'Comic Neue', 'Comic Neue', 'Comic Sans MS', 'Chalkboard SE', 'Segoe UI Emoji', cursive, sans-serif;
+        }
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4">
+
+    <div id="app" class="w-full max-w-5xl mx-auto relative">
+        <!-- 引导页 -->
+        <div id="welcomeScreen" class="bg-white/90 backdrop-blur-sm rounded-3xl shadow-2xl overflow-hidden transition-all duration-500">
+            <div class="bg-gradient-to-r from-sun to-orange-400 p-6 text-center text-white">
+                <div class="text-6xl mb-2">☀️⚽</div>
+                <h1 class="text-3xl md:text-4xl font-extrabold drop-shadow">Fun in the Sun</h1>
+                <p class="text-lg opacity-95 mt-1">小学英语 · 问答匹配大冒险</p>
+            </div>
+            <div class="p-8 md:p-10">
+                <div class="bg-sky-50 rounded-xl p-5 mb-6 border-l-8 border-sky-400 shadow-md">
+                    <p class="text-gray-700 font-semibold text-lg mb-2 flex items-center gap-2">🎮 怎么玩？</p>
+                    <ul class="text-gray-600 space-y-2 ml-4 list-disc">
+                        <li>✨ 左边<strong class="text-sun">问句</strong>，右边<strong class="text-grass">答句</strong> —— 点一点，配配对！</li>
+                        <li>✅ 先点问句再点答句（反过来也行~），正确配对卡片<strong class="text-green-600">变绿锁定</strong>，获得10分！</li>
+                        <li>❌ 配错会<strong class="text-red-500">变红+摇晃</strong>，再试试看～</li>
+                        <li>🏆 每关3组问答，共3关，全部配对成功就获胜！</li>
+                        <li>🔊 正确有清脆“叮”，错误有“咚”声提示，画面不闪。</li>
+                    </ul>
+                </div>
+                <div class="flex justify-center">
+                    <button id="startGameBtn" class="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white text-2xl font-bold py-4 px-10 rounded-full shadow-xl transition transform hover:scale-105 active:scale-95 flex items-center gap-3">🌟 开始游戏 🌟</button>
+                </div>
+            </div>
+            <div class="bg-amber-100/50 text-center py-3 text-sm text-orange-700">🌳 阳光英语 · 一起户外运动吧！</div>
+        </div>
+
+        <!-- 游戏主界面 -->
+        <div id="gameScreen" class="hidden bg-white/90 backdrop-blur-sm rounded-3xl shadow-2xl overflow-hidden">
+            <div class="bg-gradient-to-r from-sky-600 to-sky-500 p-4 text-white">
+                <div class="flex flex-wrap justify-between items-center gap-3">
+                    <div class="bg-white/20 rounded-full px-4 py-2 font-bold text-lg">📚 第 <span id="levelNum">1</span> / 3 关</div>
+                    <div class="flex-1 max-w-xs bg-white/30 rounded-full h-4 overflow-hidden">
+                        <div id="progressFill" class="progress-bar h-full bg-gradient-to-r from-yellow-300 to-green-400 rounded-full w-0"></div>
+                    </div>
+                    <div class="bg-white/20 rounded-full px-4 py-2 font-bold text-lg flex items-center gap-1">⭐ 得分: <span id="scoreValue" class="text-2xl font-black">0</span></div>
+                </div>
+            </div>
+            <div class="p-5 md:p-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="bg-amber-50/70 rounded-2xl p-4 shadow-inner">
+                        <h3 class="text-center text-orange-700 font-bold text-xl mb-3 border-b-2 border-orange-200 pb-2">❓ 问句 ❓</h3>
+                        <div id="questionsList" class="space-y-3"></div>
+                    </div>
+                    <div class="bg-emerald-50/70 rounded-2xl p-4 shadow-inner">
+                        <h3 class="text-center text-emerald-700 font-bold text-xl mb-3 border-b-2 border-emerald-200 pb-2">💬 答句 💬</h3>
+                        <div id="answersList" class="space-y-3"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-amber-100/40 text-center text-orange-500 text-sm py-2">🌟 点击卡片配对，享受阳光英语！</div>
+        </div>
+
+        <!-- 结算页 -->
+        <div id="resultScreen" class="hidden bg-white/90 backdrop-blur-sm rounded-3xl shadow-2xl overflow-hidden text-center">
+            <div class="bg-gradient-to-r from-green-400 to-emerald-500 p-6 text-white">
+                <div class="text-7xl mb-3">🏆🎉</div>
+                <h2 class="text-3xl md:text-4xl font-black">太棒了！</h2>
+            </div>
+            <div class="p-8">
+                <p class="text-2xl font-bold text-gray-700">你的最终得分</p>
+                <div class="text-6xl font-extrabold text-sun my-4" id="finalScore">0</div>
+                <p class="text-gray-500 mb-8">⭐ 英语配对小能手 ⭐</p>
+                <button id="playAgainBtn" class="bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-600 hover:to-blue-700 text-white text-xl font-bold py-4 px-10 rounded-full shadow-lg transition transform hover:scale-105">🔄 再玩一次</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ---------- 题库数据 (9组) ----------
+        const QUESTION_SET = [
+            { id: 0, q: "Do you like to play baseball?", a: "Yes, I do. It’s fun." },
+            { id: 1, q: "What do they like to do?", a: "They like to play soccer." },
+            { id: 2, q: "What is he doing?", a: "He is playing basketball." },
+            { id: 3, q: "Does he like to play basketball?", a: "No, he doesn’t." },
+            { id: 4, q: "What do you like to do?", a: "I like to jump rope." },
+            { id: 5, q: "Let’s play tag!", a: "Sure! That sounds like fun." },
+            { id: 6, q: "Do they like to play tag?", a: "Yes, they do." },
+            { id: 7, q: "What does he like to do?", a: "He likes to rollerblade." },
+            { id: 8, q: "Do you like to skateboard?", a: "No, I don’t. It’s boring." }
+        ];
+
+        // 三个关卡 (混合句型)
+        const LEVELS_DATA = [
+            [0, 4, 6],   // 一般疑问句 + what引导 + 陈述
+            [1, 3, 7],   // What do they like? / Does he like...? / What does he like?
+            [2, 5, 8]    // What is he doing? / Let's play / Do you like skateboard?
+        ];
+
+        // 全局状态
+        let currentLevel = 0;
+        let totalScore = 0;
+        let levelMatchedCount = 0;
+        let currentQuestions = [];   // { id, text, pairId, matched, domIndex? 不存dom，通过渲染时保留映射 }
+        let currentAnswers = [];
+        let selectedCard = null;      // { side, index, pairId, dom }
+        let isProcessing = false;
+        let audioCtx = null;
+
+        // DOM 元素
+        const welcomeScreen = document.getElementById('welcomeScreen');
+        const gameScreen = document.getElementById('gameScreen');
+        const resultScreen = document.getElementById('resultScreen');
+        const levelNumSpan = document.getElementById('levelNum');
+        const progressFill = document.getElementById('progressFill');
+        const scoreValueSpan = document.getElementById('scoreValue');
+        const questionsContainer = document.getElementById('questionsList');
+        const answersContainer = document.getElementById('answersList');
+        const startBtn = document.getElementById('startGameBtn');
+        const playAgainBtn = document.getElementById('playAgainBtn');
+        const finalScoreSpan = document.getElementById('finalScore');
+
+        // ------------------- 音效 ------------------
+        function initAudio() {
+            if (audioCtx) return;
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        function playSound(type) {
+            if (!audioCtx) {
+                initAudio();
+                audioCtx.resume();
+            }
+            if (!audioCtx) return;
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume().then(() => actuallyPlay(type)).catch(e=>console.log);
+            } else {
+                actuallyPlay(type);
+            }
+        }
+        function actuallyPlay(type) {
+            if (!audioCtx) return;
+            const now = audioCtx.currentTime;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.type = 'sine';
+            gain.gain.setValueAtTime(0.2, now);
+            if (type === 'correct') {
+                osc.frequency.setValueAtTime(880, now);
+                osc.frequency.exponentialRampToValueAtTime(440, now + 0.2);
+                gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.4);
+                osc.start();
+                osc.stop(now + 0.4);
+            } else {
+                osc.frequency.setValueAtTime(220, now);
+                osc.frequency.exponentialRampToValueAtTime(110, now + 0.3);
+                gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.5);
+                osc.start();
+                osc.stop(now + 0.5);
+            }
+        }
+
+        function shuffleArray(arr) {
+            for (let i = arr.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [arr[i], arr[j]] = [arr[j], arr[i]];
+            }
+            return arr;
+        }
+
+        // 初始化当前关卡数据 (不渲染DOM，只是构建数组)
+        function initLevelData() {
+            const levelPairIds = LEVELS_DATA[currentLevel];
+            const pairs = levelPairIds.map(origId => {
+                const item = QUESTION_SET[origId];
+                return { pairId: origId, qText: item.q, aText: item.a };
+            });
+            let questionsRaw = pairs.map((p, idx) => ({
+                id: idx,
+                text: p.qText,
+                pairId: p.pairId,
+                matched: false,
+            }));
+            let answersRaw = pairs.map((p, idx) => ({
+                id: idx,
+                text: p.aText,
+                pairId: p.pairId,
+                matched: false,
+            }));
+            currentQuestions = shuffleArray([...questionsRaw]);
+            currentAnswers = shuffleArray([...answersRaw]);
+            levelMatchedCount = currentQuestions.filter(q => q.matched).length;
+        }
+
+        // 渲染所有卡片 (用于初始化或关卡切换)
+        function renderFullGameCards() {
+            questionsContainer.innerHTML = '';
+            currentQuestions.forEach((q, idx) => {
+                const card = document.createElement('div');
+                card.className = `card-item bg-white rounded-xl p-4 shadow-md border-2 ${q.matched ? 'card-green' : 'border-gray-200 hover:border-sun transition'} flex items-center justify-center text-center font-medium text-gray-700 min-h-[80px]`;
+                if (!q.matched) card.classList.add('cursor-pointer', 'active-card');
+                card.innerText = q.text;
+                card.setAttribute('data-side', 'q');
+                card.setAttribute('data-index', idx);
+                card.setAttribute('data-pairid', q.pairId);
+                card.setAttribute('data-matched', q.matched);
+                questionsContainer.appendChild(card);
+            });
+            answersContainer.innerHTML = '';
+            currentAnswers.forEach((a, idx) => {
+                const card = document.createElement('div');
+                card.className = `card-item bg-white rounded-xl p-4 shadow-md border-2 ${a.matched ? 'card-green' : 'border-gray-200 hover:border-emerald-400 transition'} flex items-center justify-center text-center font-medium text-gray-700 min-h-[80px]`;
+                if (!a.matched) card.classList.add('cursor-pointer', 'active-card');
+                card.innerText = a.text;
+                card.setAttribute('data-side', 'a');
+                card.setAttribute('data-index', idx);
+                card.setAttribute('data-pairid', a.pairId);
+                card.setAttribute('data-matched', a.matched);
+                answersContainer.appendChild(card);
+            });
+            // 入场动画
+            anime({
+                targets: '.card-item',
+                opacity: [0, 1],
+                translateY: [20, 0],
+                delay: anime.stagger(50),
+                duration: 400,
+                easing: 'easeOutQuad'
+            });
+        }
+
+        // 更新得分显示与进度条（带动画）
+        function updateProgressAndScoreUI() {
+            scoreValueSpan.innerText = totalScore;
+            let percent = (levelMatchedCount / 3) * 100;
+            progressFill.style.width = `${percent}%`;
+        }
+
+        function animateScoreChange(oldVal, newVal) {
+            const obj = { val: oldVal };
+            anime({
+                targets: obj,
+                val: newVal,
+                round: 1,
+                easing: 'easeOutElastic(1, .5)',
+                duration: 400,
+                update: function() {
+                    scoreValueSpan.innerText = Math.floor(obj.val);
+                }
+            });
+            anime({
+                targets: '#scoreValue',
+                scale: [1, 1.2, 1],
+                duration: 300,
+                easing: 'easeInOutQuad'
+            });
+        }
+
+        function clearSelectedHighlight() {
+            document.querySelectorAll('.card-item').forEach(card => {
+                card.classList.remove('card-selected');
+            });
+        }
+
+        // 配对成功：只修改两张卡片的DOM样式+数据，不重新渲染整个列表
+        function matchSuccess(qItem, aItem, qCardDom, aCardDom) {
+            if (isProcessing) return false;
+            isProcessing = true;
+
+            // 更新数据状态
+            qItem.matched = true;
+            aItem.matched = true;
+            levelMatchedCount++;
+            const oldScore = totalScore;
+            totalScore += 10;
+            animateScoreChange(oldScore, totalScore);
+            playSound('correct');
+
+            // 直接修改两张卡片的类与属性（无闪烁）
+            [qCardDom, aCardDom].forEach(card => {
+                card.classList.remove('card-selected', 'shake-card');
+                card.classList.add('card-green');
+                card.classList.remove('cursor-pointer', 'active-card');
+                card.style.pointerEvents = 'none';
+                card.setAttribute('data-matched', 'true');
+            });
+            
+            // 更新进度条
+            updateProgressAndScoreUI();
+            
+            // 清除选中的缓存
+            if (selectedCard) {
+                selectedCard = null;
+            }
+            clearSelectedHighlight();
+            
+            // 检查关卡完成情况
+            const isLevelComplete = levelMatchedCount === 3;
+            if (isLevelComplete) {
+                if (currentLevel === 2) {
+                    setTimeout(() => {
+                        showResultScreen();
+                    }, 300);
+                } else {
+                    setTimeout(() => {
+                        nextLevel();
+                    }, 500);
+                }
+            }
+            isProcessing = false;
+            return true;
+        }
+
+        function matchError(qCardDom, aCardDom) {
+            if (isProcessing) return;
+            isProcessing = true;
+            playSound('error');
+            [qCardDom, aCardDom].forEach(card => {
+                if (card) {
+                    card.classList.add('shake-card');
+                    setTimeout(() => {
+                        card.classList.remove('shake-card');
+                    }, 350);
+                }
+            });
+            clearSelectedHighlight();
+            selectedCard = null;
+            setTimeout(() => {
+                isProcessing = false;
+            }, 400);
+        }
+
+        // 卡片点击处理
+        function onCardClick(e) {
+            if (isProcessing) return;
+            let target = e.target.closest('.card-item');
+            if (!target) return;
+            // 已匹配的卡片不可交互
+            if (target.classList.contains('card-green')) return;
+            
+            const side = target.getAttribute('data-side');
+            const idx = parseInt(target.getAttribute('data-index'));
+            const pairId = parseInt(target.getAttribute('data-pairid'));
+            const matchedAttr = target.getAttribute('data-matched') === 'true';
+            if (matchedAttr) return;
+            
+            let currentItem = null;
+            if (side === 'q') {
+                currentItem = currentQuestions[idx];
+            } else {
+                currentItem = currentAnswers[idx];
+            }
+            if (!currentItem || currentItem.matched) return;
+            
+            // 无选中卡片
+            if (selectedCard === null) {
+                clearSelectedHighlight();
+                target.classList.add('card-selected');
+                selectedCard = { side, index: idx, pairId, item: currentItem, dom: target };
+                return;
+            }
+            
+            const first = selectedCard;
+            // 点击同一个卡片：取消选中
+            if (first.side === side && first.index === idx) {
+                clearSelectedHighlight();
+                selectedCard = null;
+                return;
+            }
+            
+            // 必须一问一答
+            if ((first.side === 'q' && side === 'a') || (first.side === 'a' && side === 'q')) {
+                let qItem, aItem, qCardDom, aCardDom;
+                if (first.side === 'q') {
+                    qItem = first.item;
+                    aItem = currentItem;
+                    qCardDom = first.dom;
+                    aCardDom = target;
+                } else {
+                    qItem = currentItem;
+                    aItem = first.item;
+                    qCardDom = target;
+                    aCardDom = first.dom;
+                }
+                if (qItem.pairId === aItem.pairId) {
+                    matchSuccess(qItem, aItem, qCardDom, aCardDom);
+                } else {
+                    matchError(qCardDom, aCardDom);
+                }
+            } else {
+                // 同类卡片：重置选中，当前卡片成为新选中
+                clearSelectedHighlight();
+                selectedCard = null;
+                target.classList.add('card-selected');
+                selectedCard = { side, index: idx, pairId, item: currentItem, dom: target };
+            }
+        }
+
+        // 进入下一关
+        function nextLevel() {
+            if (currentLevel + 1 < 3) {
+                currentLevel++;
+                initLevelData();
+                selectedCard = null;
+                isProcessing = false;
+                clearSelectedHighlight();
+                levelNumSpan.innerText = currentLevel + 1;
+                renderFullGameCards();
+                updateProgressAndScoreUI();
+            } else {
+                showResultScreen();
+            }
+        }
+
+        function showResultScreen() {
+            gameScreen.classList.add('hidden');
+            welcomeScreen.classList.add('hidden');
+            resultScreen.classList.remove('hidden');
+            finalScoreSpan.innerText = totalScore;
+        }
+
+        function resetAndRestart() {
+            currentLevel = 0;
+            totalScore = 0;
+            levelMatchedCount = 0;
+            selectedCard = null;
+            isProcessing = false;
+            initLevelData();
+            levelNumSpan.innerText = "1";
+            updateProgressAndScoreUI();
+            resultScreen.classList.add('hidden');
+            welcomeScreen.classList.add('hidden');
+            gameScreen.classList.remove('hidden');
+            renderFullGameCards();
+            scoreValueSpan.innerText = "0";
+        }
+
+        function startGame() {
+            initAudio();
+            if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+            currentLevel = 0;
+            totalScore = 0;
+            levelMatchedCount = 0;
+            selectedCard = null;
+            isProcessing = false;
+            initLevelData();
+            levelNumSpan.innerText = "1";
+            updateProgressAndScoreUI();
+            scoreValueSpan.innerText = "0";
+            welcomeScreen.classList.add('hidden');
+            resultScreen.classList.add('hidden');
+            gameScreen.classList.remove('hidden');
+            renderFullGameCards();
+        }
+
+        // 事件绑定
+        function bindEvents() {
+            questionsContainer?.addEventListener('click', onCardClick);
+            answersContainer?.addEventListener('click', onCardClick);
+            startBtn.addEventListener('click', startGame);
+            playAgainBtn.addEventListener('click', resetAndRestart);
+        }
+
+        bindEvents();
+        // 预加载数据但不显示界面
+        initLevelData();
+    </script>
+</body>
+</html>
