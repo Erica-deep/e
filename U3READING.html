@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>📖 英文朗读器 - Amazing Playgrounds</title>
+    <style>
+        :root {
+            --yellow-50: #fffde7;
+            --yellow-100: #fff9c4;
+            --yellow-200: #fff59d;
+            --yellow-300: #fff176;
+            --yellow-400: #ffee58;
+            --yellow-500: #fdd835;
+            --yellow-600: #fbc02d;
+            --yellow-700: #f9a825;
+            --yellow-800: #f57f17;
+            --purple-50: #faf5ff;
+            --purple-100: #f3e8ff;
+            --purple-500: #a855f7;
+            --purple-600: #9333ea;
+            --purple-700: #7c3aed;
+            --white: #ffffff;
+            --gray-50: #f9fafb;
+            --gray-100: #f3f4f6;
+            --gray-200: #e5e7eb;
+            --gray-300: #d1d5db;
+            --gray-400: #9ca3af;
+            --gray-500: #6b7280;
+            --gray-600: #4b5563;
+            --gray-700: #374151;
+            --gray-800: #1f2937;
+            --shadow-xl: 0 20px 25px rgba(0,0,0,0.1), 0 10px 10px rgba(0,0,0,0.04);
+            --radius: 12px;
+            --radius-lg: 16px;
+            --radius-xl: 20px;
+            --transition: 0.2s ease;
+        }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(160deg, #f5f0ff 0%, #ede4ff 15%, #e0d6ff 30%, #f0e8ff 50%, #f8f4ff 65%, #ede2ff 80%, #f3ecff 100%);
+            background-attachment: fixed;
+            min-height: 100vh; min-height: 100dvh;
+            color: #1f2937; line-height: 1.6;
+            -webkit-tap-highlight-color: transparent;
+            -webkit-font-smoothing: antialiased;
+        }
+        .app-container { max-width:800px; margin:0 auto; padding:16px; position:relative; z-index:1; }
+        .app-header { text-align:center; padding:20px 20px 10px; }
+        .app-header .logo-icon { font-size:48px; display:block; margin-bottom:6px; }
+        .app-header h1 {
+            font-size:26px; font-weight:700;
+            background:linear-gradient(135deg, var(--purple-700), var(--purple-500));
+            -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent;
+        }
+        .main-card {
+            background:white; border-radius:var(--radius-xl); box-shadow:var(--shadow-xl); padding:20px 18px;
+            margin-bottom:16px; border:1px solid rgba(168,85,247,0.08);
+        }
+        .article-title {
+            font-size:22px; font-weight:700; color:var(--purple-700); text-align:center; margin-bottom:6px;
+        }
+        .article-topic {
+            display:inline-block; background:var(--purple-100); color:var(--purple-700); font-size:12px;
+            font-weight:600; padding:4px 12px; border-radius:20px; margin-bottom:14px; text-align:center;
+        }
+        .sentences-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:8px; }
+        .sentences-count { font-weight:700; font-size:15px; color:var(--gray-700); }
+        .progress-container { margin-top:8px; margin-bottom:12px; }
+        .progress-label { display:flex; justify-content:space-between; font-size:12px; color:var(--gray-600); margin-bottom:5px; }
+        .progress-bar-outer { height:8px; background:var(--gray-200); border-radius:10px; overflow:hidden; }
+        .progress-bar-inner { height:100%; background:linear-gradient(90deg, #c084fc, #7c3aed); border-radius:10px; width:0%; transition:width 0.4s; }
+        .sentences-list { display:flex; flex-direction:column; gap:8px; max-height:55vh; overflow-y:auto; padding-right:4px; }
+        .sentence-card {
+            background:white; border:1.5px solid #e5e7eb; border-radius:var(--radius); padding:14px 16px;
+            transition:var(--transition); animation:slideUp 0.35s ease forwards; opacity:0; cursor:pointer;
+        }
+        @keyframes slideUp { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
+        .sentence-card.playing {
+            background: linear-gradient(135deg, #fff9c4 0%, #fff176 100%) !important;
+            border: 2.5px solid #f9a825 !important;
+            box-shadow: 0 0 0 8px rgba(251,192,45,0.18), 0 8px 28px rgba(249,168,37,0.28) !important;
+            z-index:2;
+        }
+        .sentence-card.playing .sentence-index { background:#f9a825 !important; color:#1f2937 !important; font-weight:700; }
+        .sentence-card .sentence-header { display:flex; align-items:flex-start; gap:10px; }
+        .sentence-card .sentence-index {
+            font-weight:700; color:var(--purple-500); font-size:12px; min-width:28px; text-align:center;
+            background:var(--purple-100); border-radius:20px; padding:4px 8px; flex-shrink:0;
+        }
+        .sentence-card .sentence-text { flex:1; font-size:15px; color:#1f2937; line-height:1.65; word-break:break-word; }
+        .sentence-card .sentence-translation {
+            margin-top:8px; padding-top:8px; border-top:1px dashed #e5e7eb; font-size:13px; color:#4b5563;
+            display:flex; align-items:flex-start; gap:6px;
+        }
+        .btn-play-sentence {
+            width:40px; height:40px; border-radius:50%; border:2px solid #d8b4fe; background:white;
+            cursor:pointer; font-size:17px; display:flex; align-items:center; justify-content:center;
+            transition:var(--transition); flex-shrink:0; color:var(--purple-600);
+        }
+        .btn-play-sentence.playing {
+            background:#f57f17 !important; border-color:#f57f17 !important; color:white !important;
+            box-shadow:0 0 0 8px rgba(245,127,23,0.25);
+        }
+        .bottom-controls {
+            background:white; border-radius:var(--radius-xl); box-shadow:var(--shadow-xl); padding:16px 18px;
+            position:sticky; bottom:16px; z-index:10; display:flex; flex-wrap:wrap; gap:10px; align-items:center; justify-content:center;
+        }
+        .speed-selector { display:flex; gap:3px; background:var(--gray-100); border-radius:var(--radius); padding:3px; }
+        .speed-btn {
+            padding:7px 12px; border:none; background:transparent; border-radius:calc(var(--radius)-4px);
+            cursor:pointer; font-size:12px; font-weight:600; color:#6b7280; transition:var(--transition);
+        }
+        .speed-btn.active { background:white; color:var(--purple-700); box-shadow:0 1px 2px rgba(0,0,0,0.05); }
+        .btn {
+            display:inline-flex; align-items:center; justify-content:center; gap:7px; padding:11px 20px;
+            border:none; border-radius:var(--radius); font-size:14px; font-weight:600; cursor:pointer;
+            transition:var(--transition);
+        }
+        .btn-primary { background:linear-gradient(135deg, var(--purple-600), var(--purple-700)); color:white; }
+        .btn-secondary { background:var(--gray-100); color:var(--gray-700); }
+        .btn-sm { padding:7px 14px; font-size:13px; }
+        .btn-continuous { padding:12px 24px; font-size:15px; border-radius:30px; font-weight:700; }
+        .btn-continuous.playing { background:linear-gradient(135deg, #ef4444, #dc2626); }
+        .toast { position:fixed; top:20px; left:50%; transform:translateX(-50%) translateY(-120px); background:#111827;
+            color:white; padding:12px 22px; border-radius:30px; font-size:14px; font-weight:600; z-index:1000;
+            transition:transform 0.35s; pointer-events:none; }
+        .toast.show { transform:translateX(-50%) translateY(0); }
+        @media (max-width:600px) { .app-container{padding:8px;} .btn-play-sentence{width:36px;height:36px;} }
+    </style>
+</head>
+<body>
+<div class="app-container">
+    <header class="app-header">
+        <span class="logo-icon">🎠</span>
+        <h1>英文朗读器</h1>
+        <p style="color:#6b7280; font-size:13px;">奇妙的游乐场 · Amazing Playgrounds</p>
+    </header>
+    <div class="main-card" id="sentencesCard">
+        <div style="text-align:center;">
+            <div class="article-title">🎠 Amazing Playgrounds</div>
+            <span class="article-topic">📖 科普短文 · 日本彩虹游乐场</span>
+        </div>
+        <div class="sentences-header">
+            <span class="sentences-count" id="sentencesCount">📝 共 0 个句子</span>
+            <button class="btn btn-secondary btn-sm" id="btnResetTranslation">🔄 重新翻译</button>
+        </div>
+        <div class="progress-container" id="progressContainer">
+            <div class="progress-label"><span>🌐 翻译进度</span><span id="progressText">0/0</span></div>
+            <div class="progress-bar-outer"><div class="progress-bar-inner" id="progressBar"></div></div>
+        </div>
+        <div class="sentences-list" id="sentencesList"></div>
+    </div>
+    <div class="bottom-controls" id="bottomControls">
+        <span style="font-size:12px; color:#6b7280;">🎵 语速：</span>
+        <div class="speed-selector" id="speedSelector">
+            <button class="speed-btn" data-speed="0.6">0.6x</button>
+            <button class="speed-btn" data-speed="0.75">0.75x</button>
+            <button class="speed-btn active" data-speed="0.9">0.9x</button>
+            <button class="speed-btn" data-speed="1.05">1.05x</button>
+            <button class="speed-btn" data-speed="1.2">1.2x</button>
+        </div>
+        <button class="btn btn-primary btn-continuous" id="btnContinuousPlay">▶️ 连续朗读</button>
+        <button class="btn btn-secondary btn-sm" id="btnStopAll" style="display:none;">⏹️ 停止</button>
+    </div>
+</div>
+<div class="toast" id="toast"></div>
+<script>
+    (function() {
+        // 标题已单独展示，正文从 Do you like to play outside? 开始
+        const ARTICLE_TEXT = `Do you like to play outside? Many children like to play at playgrounds. Playgrounds can be really fun!
+
+This is a very special playground in Japan. The artist who made this playground is from Japan. Her name is Toshiko Horiuchi-MacAdam.
+
+In this playground, you can jump and play on big, colorful circles. You can run, crawl, climb, and slide! You can bounce and have a lot of fun here. There are even big balls to swing on. It's really cool!`;
+
+        const sentencesList = document.getElementById('sentencesList');
+        const sentencesCount = document.getElementById('sentencesCount');
+        const progressContainer = document.getElementById('progressContainer');
+        const progressBar = document.getElementById('progressBar');
+        const progressText = document.getElementById('progressText');
+        const btnContinuousPlay = document.getElementById('btnContinuousPlay');
+        const btnStopAll = document.getElementById('btnStopAll');
+        const toast = document.getElementById('toast');
+        const speedBtns = document.querySelectorAll('.speed-btn');
+
+        let sentences = [];
+        let currentSpeed = 0.9;
+        let isContinuousPlaying = false;
+        let currentPlayingIndex = -1;
+        let isTranslating = false;
+        let translationAbortController = null;
+
+        function showToast(msg, type='') {
+            clearTimeout(window._t); toast.textContent=msg; toast.className='toast '+type+' show';
+            window._t=setTimeout(()=>toast.classList.remove('show'),2500);
+        }
+
+        function splitSentences(text) {
+            const abbr = ['Mr','Mrs','Ms','Dr','Prof','Sr','Jr','St','Ave','Blvd','Rd','etc','e.g','i.e','vs','Inc','Corp','Dept','Est','Approx','Capt','Col','Gen','Lt','Maj','Sgt','Rev','Hon','Gov','Sen','Rep','Amb','Pres','Sec','Treas','Adm','Cmdr','Comm','Dir','Exec','Mgr','Supr','Vol','Ch','P.S','R.S.V.P','a.m','p.m','No','Nos','Art','Fig','Tab','Eq','Al','App','Avg','Max','Min','Temp','Perm','Cont','Ed','Eds','Trans','Publ','Univ','Assoc','Assn','Bros','Co','Ltd','Misc','approx','esp','Jan','Feb','Mar','Apr','Jun','Jul','Aug','Sep','Sept','Oct','Nov','Dec','Mon','Tue','Tues','Wed','Thu','Thur','Thurs','Fri','Sat','Sun','U.S','U.K','U.N','E.U','N.A.T.O'];
+            let protectedText=text; const markerMap={}; let c=0;
+            const sorted=[...abbr].sort((a,b)=>b.length-a.length);
+            sorted.forEach(ab=>{
+                const esc=ab.replace(/\./g,'\\.'); const re=new RegExp('\\b'+esc+'\\.','gi');
+                protectedText=protectedText.replace(re,m=>{ const mk='__ABBR_'+c+'__'; markerMap[mk]=m; c++; return mk; });
+            });
+            const parts=[]; let last=0; const re=/[.!?]+[\s\n\r]+/g; let m;
+            while((m=re.exec(protectedText))!==null){ parts.push(protectedText.substring(last,m.index+m[0].length)); last=m.index+m[0].length; }
+            if(last<protectedText.length) parts.push(protectedText.substring(last));
+            const restored=parts.map(p=>{ let r=p.trim(); for(const[k,v]of Object.entries(markerMap)) r=r.replace(k,v); return r; }).filter(s=>s.length>1&&/[a-zA-Z]/.test(s));
+            const merged=[]; restored.forEach(s=>{ if(merged.length>0&&s.length<4&&!/[.!?]$/.test(s)&&/^[a-z]/i.test(s)) merged[merged.length-1]+=' '+s; else merged.push(s); });
+            return merged;
+        }
+
+        function processText(text){
+            stopAllPlayback();
+            if(translationAbortController){ translationAbortController.abort(); translationAbortController=null; }
+            isTranslating=false; currentPlayingIndex=-1; isContinuousPlaying=false;
+            btnContinuousPlay.classList.remove('playing'); btnContinuousPlay.innerHTML='▶️ 连续朗读'; btnStopAll.style.display='none';
+            const raw=splitSentences(text);
+            sentences=raw.map((s,i)=>({index:i,text:s,translation:'',translated:false}));
+            renderAllSentences();
+            sentencesCount.textContent='📝 共 '+sentences.length+' 个句子';
+            progressContainer.style.display='block'; progressBar.style.width='0%'; progressText.textContent='0/'+sentences.length;
+            if(sentences.length>0) startTranslationQueue();
+        }
+
+        function renderAllSentences(){
+            sentencesList.innerHTML='';
+            sentences.forEach((s,i)=>{
+                const card=document.createElement('div'); card.className='sentence-card'; card.dataset.index=i; card.id='sentenceCard-'+i;
+                const header=document.createElement('div'); header.className='sentence-header';
+                const badge=document.createElement('span'); badge.className='sentence-index'; badge.textContent='#'+(i+1);
+                const textEl=document.createElement('span'); textEl.className='sentence-text'; textEl.textContent=s.text;
+                const playBtn=document.createElement('button'); playBtn.className='btn-play-sentence'; playBtn.innerHTML='▶️';
+                playBtn.addEventListener('click',e=>{ e.stopPropagation(); playSingleSentence(i); });
+                header.append(badge,textEl,playBtn); card.appendChild(header);
+                const transDiv=document.createElement('div'); transDiv.className='sentence-translation'; transDiv.id='translation-'+i;
+                if(s.translated&&s.translation) transDiv.innerHTML='<span>🇨🇳</span><span>'+escapeHTML(s.translation)+'</span>';
+                else transDiv.innerHTML='<span style="color:#9ca3af;">⏳ 翻译中...</span>';
+                card.appendChild(transDiv);
+                card.addEventListener('click',()=>playSingleSentence(i));
+                sentencesList.appendChild(card);
+            });
+        }
+
+        function updateTranslationDisplay(index, translation){
+            const div=document.getElementById('translation-'+index);
+            if(div) div.innerHTML='<span>🇨🇳</span><span>'+escapeHTML(translation)+'</span>';
+        }
+
+        function updatePlayButtonState(index, isPlaying){
+            document.querySelectorAll('.btn-play-sentence').forEach(b=>{ b.classList.remove('playing'); b.innerHTML='▶️'; });
+            document.querySelectorAll('.sentence-card').forEach(c=>c.classList.remove('playing'));
+            if(isPlaying&&index>=0){
+                const btn=document.querySelector('#sentenceCard-'+index+' .btn-play-sentence');
+                const card=document.getElementById('sentenceCard-'+index);
+                if(btn){ btn.classList.add('playing'); btn.innerHTML='🔊'; }
+                if(card){ card.classList.add('playing'); card.scrollIntoView({behavior:'smooth',block:'center'}); }
+            }
+        }
+
+        function escapeHTML(s){ const d=document.createElement('div'); d.textContent=s; return d.innerHTML; }
+
+        async function startTranslationQueue(){
+            if(isTranslating) return; isTranslating=true; translationAbortController=new AbortController(); const signal=translationAbortController.signal;
+            const pending=[]; sentences.forEach((s,i)=>{ if(!s.translated) pending.push(i); });
+            if(!pending.length){ isTranslating=false; progressBar.style.width='100%'; return; }
+            const total=pending.length, doneBefore=sentences.length-total; let completed=0;
+            progressBar.style.width=(doneBefore/sentences.length*100)+'%'; progressText.textContent=doneBefore+'/'+sentences.length;
+            for(const idx of pending){
+                if(signal.aborted) break;
+                try{
+                    const trans=await translateText(sentences[idx].text,signal);
+                    if(!signal.aborted){ sentences[idx].translation=trans; sentences[idx].translated=true; updateTranslationDisplay(idx,trans); completed++;
+                        const d=doneBefore+completed; progressBar.style.width=(d/sentences.length*100)+'%'; progressText.textContent=d+'/'+sentences.length; }
+                }catch(e){ if(!signal.aborted){ sentences[idx].translation='[翻译失败]'; sentences[idx].translated=true; updateTranslationDisplay(idx,'[翻译失败]'); completed++;
+                    const d=doneBefore+completed; progressBar.style.width=(d/sentences.length*100)+'%'; } }
+                if(!signal.aborted&&completed<total) await new Promise(r=>{ const t=setTimeout(r,350); signal.addEventListener('abort',()=>clearTimeout(t)); });
+            }
+            if(!signal.aborted){ progressBar.style.width='100%'; isTranslating=false; translationAbortController=null; }
+        }
+
+        async function translateText(text,signal){
+            const resp=await fetch('https://api.mymemory.translated.net/get?q='+encodeURIComponent(text)+'&langpair=en|zh&de=demo@reader.app',{signal});
+            const data=await resp.json();
+            if(data.responseStatus===200&&data.responseData) return data.responseData.translatedText;
+            throw new Error('API error');
+        }
+
+        function getBestVoice(){
+            const voices=speechSynthesis.getVoices();
+            if(!voices.length) return null;
+            return voices.find(v=>v.lang==='en-US'&&v.name.includes('Google'))||voices.find(v=>v.lang==='en-US')||voices.find(v=>v.lang.startsWith('en-'))||voices[0];
+        }
+
+        function playSingleSentence(index){
+            if(index<0||index>=sentences.length) return;
+            if(isContinuousPlaying) stopContinuousPlay();
+            speechSynthesis.cancel();
+            const utterance=new SpeechSynthesisUtterance(sentences[index].text); utterance.rate=currentSpeed; utterance.lang='en-US';
+            const voice=getBestVoice(); if(voice) utterance.voice=voice;
+            currentPlayingIndex=index; updatePlayButtonState(index,true);
+            utterance.onend=()=>{ if(currentPlayingIndex===index&&!isContinuousPlaying){ currentPlayingIndex=-1; updatePlayButtonState(-1,false); } };
+            utterance.onerror=()=>{ if(currentPlayingIndex===index&&!isContinuousPlaying){ currentPlayingIndex=-1; updatePlayButtonState(-1,false); } };
+            speechSynthesis.speak(utterance);
+        }
+
+        function startContinuousPlay(){
+            if(!sentences.length){ showToast('无句子','error'); return; }
+            if(isContinuousPlaying){ stopContinuousPlay(); return; }
+            isContinuousPlaying=true; btnContinuousPlay.classList.add('playing'); btnContinuousPlay.innerHTML='⏸️ 停止朗读';
+            btnStopAll.style.display=''; currentPlayingIndex=0; playNextInSequence();
+        }
+
+        function playNextInSequence(){
+            if(!isContinuousPlaying) return;
+            if(currentPlayingIndex>=sentences.length){ stopContinuousPlay(); showToast('✅ 全部朗读完成','success'); return; }
+            const utterance=new SpeechSynthesisUtterance(sentences[currentPlayingIndex].text); utterance.rate=currentSpeed; utterance.lang='en-US';
+            const voice=getBestVoice(); if(voice) utterance.voice=voice;
+            const idx=currentPlayingIndex; updatePlayButtonState(idx,true);
+            utterance.onend=()=>{ if(isContinuousPlaying&&currentPlayingIndex===idx){ currentPlayingIndex++; setTimeout(playNextInSequence,300); } };
+            utterance.onerror=()=>{ if(isContinuousPlaying&&currentPlayingIndex===idx){ currentPlayingIndex++; setTimeout(playNextInSequence,500); } };
+            speechSynthesis.speak(utterance);
+        }
+
+        function stopContinuousPlay(){
+            isContinuousPlaying=false; speechSynthesis.cancel(); currentPlayingIndex=-1;
+            updatePlayButtonState(-1,false); btnContinuousPlay.classList.remove('playing'); btnContinuousPlay.innerHTML='▶️ 连续朗读'; btnStopAll.style.display='none';
+        }
+        function stopAllPlayback(){ stopContinuousPlay(); }
+
+        document.getElementById('btnResetTranslation').addEventListener('click',()=>{
+            if(isTranslating&&translationAbortController){ translationAbortController.abort(); translationAbortController=null; }
+            isTranslating=false; sentences.forEach(s=>{ s.translation=''; s.translated=false; });
+            renderAllSentences(); progressContainer.style.display='block'; progressBar.style.width='0%'; progressText.textContent='0/'+sentences.length;
+            if(sentences.length>0) startTranslationQueue(); showToast('🔄 正在重新翻译','');
+        });
+
+        speedBtns.forEach(b=>b.addEventListener('click',()=>{
+            speedBtns.forEach(x=>x.classList.remove('active')); b.classList.add('active');
+            currentSpeed=parseFloat(b.dataset.speed);
+            if(isContinuousPlaying){ const idx=currentPlayingIndex; speechSynthesis.cancel(); if(idx>=0&&idx<sentences.length){ currentPlayingIndex=idx; setTimeout(playNextInSequence,100); } }
+        }));
+
+        btnContinuousPlay.addEventListener('click',()=>isContinuousPlaying?stopContinuousPlay():startContinuousPlay());
+        btnStopAll.addEventListener('click',stopAllPlayback);
+
+        speechSynthesis.onvoiceschanged=()=>{};
+        processText(ARTICLE_TEXT);
+    })();
+</script>
+</body>
+</html>
